@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: PMPL-1.0-or-later
+[package]
+name = "squeakwell"
+version = "0.1.0"
+edition = "2024"
+authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]
+description = "Database recovery through cross-modal constraint propagation — 8 modalities as witnesses, progressive type ratchet, drift-to-zero convergence"
+license = "PMPL-1.0-or-later"
+repository = "https://github.com/hyperpolymath/squeakwell"
+keywords = ["database", "recovery", "constraint-propagation", "verisimdb", "formal-verification"]
+categories = ["command-line-utilities", "database"]
+
+[[bin]]
+name = "squeakwell"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+anyhow = "1"
+thiserror = "2"
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"

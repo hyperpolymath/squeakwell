@@ -1,0 +1,240 @@
+// SPDX-License-Identifier: PMPL-1.0-or-later
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Octad-Recover (working title — see naming section below)
+Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+:toc: left
+:toclevels: 3
+:icons: font
+:source-highlighter: rouge
+
+== What Is This?
+
+A database recovery and reconstruction tool that uses VeriSimDB's octad model
+and VQL-UT's progressive type system to **reassemble damaged, fragmented, or
+inconsistent datasets** through cross-modal constraint propagation.
+
+Traditional recovery tools work at the storage level — reassembling bytes into
+pages. This tool works at the **semantic level** — using 8 independent
+representations of each entity as witnesses that cross-check and reconstruct
+each other, tightening formal type constraints progressively until the data
+converges on a single consistent identity.
+
+== The Core Idea
+
+[source]
+----
+Damaged data (fragments, corruption, inconsistencies)
+        │
+        ▼
+  INGEST: scatter fragments across octad modalities
+  (whatever you can recover goes into whichever modality has data)
+        │
+        ▼
+  PHASE 1 — LOOSE CONSTRAINTS (VQL-UT Levels 1-3)
+  Accept anything structurally valid. Parse, bind to schema, type-check.
+  Drift score: ~0.8 (high — modalities disagree heavily)
+        │
+        ▼
+  PHASE 2 — CROSS-MODAL INFERENCE
+  Use populated modalities to infer missing ones:
+    Document text  ──► infer Graph edges (entity extraction)
+    Document text  ──► infer Vector embedding (encode)
+    Graph edges    ──► infer Semantic annotations (type inference)
+    Provenance     ──► infer Temporal ordering (hash-chain sequence)
+    Spatial coords ──► infer Graph proximity (spatial join)
+    Tensor data    ──► infer Vector projections (dimensionality reduction)
+  Drift score: ~0.5 (filling in, but contradictions emerging)
+        │
+        ▼
+  PHASE 3 — CONFLICT RESOLUTION
+  Where inferred modalities contradict observed ones:
+    Provenance chain   → which source is more authoritative?
+    Temporal versions  → which is more recent?
+    Semantic types     → which is type-valid at higher levels?
+    Cardinality proofs → which produces the expected row count?
+  Drift score: ~0.3 (contradictions resolved, consistency improving)
+        │
+        ▼
+  PHASE 4 — TIGHTENING (VQL-UT Levels 4-6)
+  Apply null-safety, injection-proofing, result-type checking.
+  Any data that can't satisfy these levels is flagged for human review.
+  Drift score: ~0.15
+        │
+        ▼
+  PHASE 5 — CONVERGENCE (VQL-UT Levels 7-10)
+  Cardinality bounds, effect tracking, temporal consistency, linearity.
+  Data that passes all 10 levels is formally verified as recovered.
+  Drift score: approaches 0.0
+        │
+        ▼
+  OUTPUT: reconstructed database with:
+    - Per-entity confidence scores
+    - Provenance chain showing reconstruction history
+    - Proof certificates for each type level achieved
+    - Residual drift report (what couldn't be resolved)
+    - Human review queue (ambiguous cases)
+----
+
+== Why This Works
+
+**Eight witnesses are better than one.** When you have 8 independent
+representations of the same entity, damage to any one can be compensated
+by the others:
+
+|===
+| If you lose... | These modalities can reconstruct it
+
+| Graph edges | Document text (NER), Semantic annotations, Spatial proximity
+| Vector embeddings | Document text (re-encode), Tensor projections
+| Document text | Graph edges + Semantic annotations (template generation)
+| Temporal history | Provenance chain (hash-chain ordering)
+| Provenance | Temporal versions (timestamp ordering)
+| Spatial coordinates | Graph proximity, Document georeferences
+| Semantic types | Infer from Graph + Document + VQL-UT type checking
+| Tensor data | Vector embeddings (expand dimensions), raw data re-ingest
+|===
+
+**Progressive typing is the ratchet.** Each VQL-UT level constrains the
+solution space further. Level 1 accepts almost anything. Level 10 demands
+formal proof. Data can only become more consistent through the levels,
+never less. This is constraint propagation applied to database recovery.
+
+**Drift detection becomes the convergence metric.** Instead of alerting on
+drift (normal VeriSimDB behaviour), drift score becomes the objective
+function: recovery is complete when cross-modal drift approaches zero.
+
+== Architecture
+
+* **Ingest engine** (`src/ingest/`) — Accepts damaged databases, fragments,
+  exports, dumps, partial backups. Maps whatever it finds into octad modalities.
+  Handles: SQL dumps, JSON/CSV fragments, corrupted binary files, partial WAL
+  logs, orphaned indexes, detached TOAST data, broken foreign keys.
+
+* **Reconstruction engine** (`src/engine/`) — The core. Runs the 5-phase
+  progressive constraint propagation:
+  - Phase 1: Loose acceptance + schema inference
+  - Phase 2: Cross-modal inference (fill missing modalities)
+  - Phase 3: Conflict resolution (provenance + temporal + semantic arbitration)
+  - Phase 4: Type tightening (VQL-UT levels 4-6)
+  - Phase 5: Convergence (VQL-UT levels 7-10)
+
+* **Idris2 type kernel** (`src/abi/`) — Formal proofs that:
+  - Constraint propagation is monotonic (data only gets more consistent)
+  - Cross-modal inference preserves entity identity
+  - Conflict resolution is deterministic (same input → same output)
+  - Type ratchet is sound (passing level N implies passing levels 1..N-1)
+
+* **VQL-UT integration** — Uses TypedQLiser as the type-checking layer.
+  Each phase invokes progressively stricter VQL-UT levels.
+
+* **Output** — Reconstructed database in VeriSimDB format (all 8 modalities
+  populated), with per-entity confidence scores, proof certificates, and
+  a human review queue for ambiguous cases.
+
+== Naming
+
+**Working title: octad-recover.** Seeking a better name. Candidates below.
+
+=== The Concept (what this approach is called)
+
+[cols="1,3,1"]
+|===
+| Name | Rationale | Feeling
+
+| **Cross-Modal Constraint Convergence**
+| Technically precise. Recovery through converging constraints across modalities.
+| Academic — good for a paper title
+
+| **Progressive Semantic Recovery**
+| Captures the progressive tightening and semantic (not byte-level) approach.
+| Accessible — good for explaining to people
+
+| **Octad Convergence**
+| Short, ties to VeriSimDB's octad model.
+| Branded — ties it to the ecosystem
+
+| **Identity Reconstruction via Drift Minimisation**
+| Captures the core mechanism: entity identity rebuilt by driving drift to zero.
+| Precise but wordy
+
+| **Multi-Modal Witness Recovery**
+| Each modality is a "witness" to the entity's identity. Recovery = reconciling witnesses.
+| Evocative — "witnesses" is compelling
+
+| **Constraint Propagation Recovery** (CPR)
+| Like CPR for databases — resuscitation through constraint propagation. Also a medical metaphor that fits ambientops.
+| Memorable — CPR is a great acronym, ties to hospital model
+
+| **Type-Ratcheted Reconstruction**
+| The progressive type levels act as a ratchet — data only tightens, never loosens.
+| Technical — captures the mechanism clearly
+|===
+
+=== The Tool (what the binary/project is called)
+
+[cols="1,3,1"]
+|===
+| Name | Rationale | Feeling
+
+| **resurgam**
+| Latin: "I shall rise again." A database that resurrects itself from fragments.
+| Beautiful — scholarly, memorable, works as a CLI name
+
+| **reconvene**
+| Data fragments reconvene into a coherent whole.
+| Clear — English, accessible, verb-as-name
+
+| **coalesce**
+| Fragments coalesce into identity. Also a SQL function (COALESCE) that handles nulls — fitting.
+| Perfect double meaning — SQL + recovery
+
+| **octad-recover**
+| Descriptive. Does what it says.
+| Safe — clear but not inspiring
+
+| **witness**
+| Each modality is a witness. The tool reconciles witnesses.
+| Evocative — but might clash with other tools
+
+| **converge**
+| The drift converges to zero. The data converges on identity.
+| Simple — strong verb, clear meaning
+
+| **palimpsest-db**
+| A palimpsest is a manuscript where earlier writing shows through. Recovering underlying data.
+| On-brand — ties to your Palimpsest License. Metaphorically perfect.
+
+| **anamnesis**
+| Greek: ἀνάμνησις — "recollection, remembering." The database remembers itself.
+| Scholarly — fits the Greek naming in your ecosystem (Ephapax, Phronesis)
+
+| **mneme**
+| Greek: μνήμη — "memory." Simpler than anamnesis. The memory-recovery tool.
+| Short — pronounceable, memorable
+
+| **ektasis**
+| Greek: ἔκτασις — "extension, stretching out." Extending fragments back to wholeness.
+| Thematic — but less intuitive
+
+| **synapsis**
+| Greek: σύναψις — "connection, junction." Reconnecting disconnected data.
+| Good — ties to the cross-modal linking concept
+
+| **cpr**
+| Constraint Propagation Recovery. CPR for databases. Ambientops hospital model.
+| Perfect fit — medical metaphor, short, memorable as CLI command
+|===
+
+=== My recommendation
+
+**Concept:** _Constraint Propagation Recovery (CPR)_ or _Multi-Modal Witness Recovery_
+
+**Tool:** _resurgam_ (scholarly, memorable, "I shall rise again") or _cpr_ (ties to ambientops hospital model, instantly memorable, explains itself)
+
+== Status
+
+**Concept stage.** Architecture sketched, phases defined, naming under discussion.
+
+== License
+
+SPDX-License-Identifier: PMPL-1.0-or-later
