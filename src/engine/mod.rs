@@ -8,9 +8,15 @@
 //   Phase 3: Conflict resolution
 //   Phase 4: Type tightening (VQL-UT L4-6)
 //   Phase 5: Convergence (VQL-UT L7-10)
+//
+// VeriSimDB integration: recovery sessions and per-phase events are persisted
+// to VeriSimDB (collections: squeakwell:sessions, squeakwell:phase-events).
+// All VeriSimDB calls are fail-open (.ok()) — recoveries complete even when
+// VeriSimDB is unavailable.
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use crate::verisimdb::{VeriSimDbClient, phase_event_doc, session_doc};
 
 /// Current state of a recovery session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,8 +43,37 @@ pub struct EntityConfidence {
 }
 
 /// Run the recovery process.
+///
+/// Persists session snapshots and phase-transition events to VeriSimDB
+/// (collections: squeakwell:sessions, squeakwell:phase-events). All
+/// VeriSimDB calls are fail-open — the recovery completes even if
+/// VeriSimDB is unreachable.
 pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterations: u32) -> Result<()> {
     println!("SqueakWell: beginning recovery in {}", workdir);
+
+    // Use a stable session ID derived from the workdir path
+    let session_id = format!(
+        "sq:{}",
+        sha2_short(workdir)
+    );
+
+    let vdb = VeriSimDbClient::new();
+
+    // Persist initial session state to VeriSimDB (fail-open)
+    let initial_state = serde_json::json!({
+        "phase": 0u8,
+        "iteration": 0u32,
+        "overall_drift": 1.0f64,
+        "entities_total": 0u64,
+        "entities_converged": 0u64,
+        "entities_review": 0u64,
+        "max_level_achieved": 0u8,
+        "target_level": target_level,
+        "drift_threshold": drift_threshold,
+        "max_iterations": max_iterations,
+        "status": "started",
+    });
+    vdb.persist_session(&session_id, &session_doc(&session_id, workdir, &initial_state)).ok();
 
     for phase in 1..=5u8 {
         let phase_name = match phase {
@@ -73,10 +108,35 @@ pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterat
                 println!("  Checking VQL-UT Level {}...", level);
             }
         }
+
+        // Persist phase-transition event to VeriSimDB (fail-open)
+        // drift = 1.0 until the engine implementation populates real values
+        let event = phase_event_doc(&session_id, phase, 0, 1.0);
+        vdb.append_phase_event(&session_id, phase, &event).ok();
     }
+
+    // Persist final session state
+    let final_state = serde_json::json!({
+        "status": "complete",
+        "target_level": target_level,
+        "drift_threshold": drift_threshold,
+    });
+    vdb.persist_session(&session_id, &session_doc(&session_id, workdir, &final_state)).ok();
 
     println!("\nSqueakWell: recovery complete (stub — engine implementation pending)");
     Ok(())
+}
+
+/// Derive a short stable identifier from an arbitrary string.
+///
+/// Returns the first 12 hex characters of SHA-256(input), giving 48 bits
+/// of collision resistance — sufficient for session IDs.
+fn sha2_short(input: &str) -> String {
+    use sha2::{Sha256, Digest};
+    let mut hasher = Sha256::new();
+    hasher.update(input.as_bytes());
+    let result = hasher.finalize();
+    format!("{:x}", result)[..12].to_owned()
 }
 
 pub fn print_status(workdir: &str) -> Result<()> {

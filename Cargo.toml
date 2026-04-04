@@ -23,6 +23,9 @@ anyhow = "1"
 thiserror = "2"
 chrono = { version = "0.4", features = ["serde"] }
 sha2 = "0.10"
+# VeriSimDB HTTP client — persistence for recovery sessions and entity confidence
+ureq = { version = "3", features = ["json"] }
+urlencoding = "2"
 
 [dev-dependencies]
 tempfile = "3"

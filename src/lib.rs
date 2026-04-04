@@ -5,3 +5,4 @@ pub mod abi;
 pub mod engine;
 pub mod ingest;
 pub mod manifest;
+pub mod verisimdb;
