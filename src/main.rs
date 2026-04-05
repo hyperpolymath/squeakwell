@@ -6,7 +6,7 @@
 // Your database is squealing? SqueakWell makes it well.
 //
 // Uses VeriSimDB's octad (8 modalities) as independent witnesses that
-// cross-check and reconstruct each other. Progressive VQL-UT type levels
+// cross-check and reconstruct each other. Progressive VCL-total type levels
 // act as a ratchet — data only gets more consistent, never less.
 // Recovery is complete when cross-modal drift approaches zero.
 
@@ -46,7 +46,7 @@ enum Commands {
         /// Working directory containing ingested octad
         #[arg(short, long, default_value = ".squeakwell")]
         workdir: String,
-        /// Maximum VQL-UT level to target (1-10, default 6)
+        /// Maximum VCL-total level to target (1-10, default 6)
         #[arg(short, long, default_value = "6")]
         target_level: u8,
         /// Stop when drift drops below this threshold (0.0-1.0)
@@ -85,8 +85,8 @@ enum Commands {
     Export {
         #[arg(short, long, default_value = ".squeakwell")]
         workdir: String,
-        /// Output format: verisimdb | sql | json | csv
-        #[arg(short, long, default_value = "verisimdb")]
+        /// Output format: verisim | sql | json | csv
+        #[arg(short, long, default_value = "verisim")]
         format: String,
         /// Output path
         #[arg(short, long)]
@@ -130,7 +130,7 @@ fn main() -> Result<()> {
 fn explain_phases() {
     println!("=== SqueakWell: 5-Phase Recovery ===");
     println!();
-    println!("  PHASE 1 — LOOSE ACCEPTANCE (VQL-UT Levels 1-3)");
+    println!("  PHASE 1 — LOOSE ACCEPTANCE (VCL-total Levels 1-3)");
     println!("    Scatter fragments across octad modalities.");
     println!("    Accept anything structurally valid.");
     println!("    Drift score: ~0.8 (high — modalities disagree)");
@@ -147,12 +147,12 @@ fn explain_phases() {
     println!("    semantic type validity, cardinality consistency.");
     println!("    Drift score: ~0.3 (contradictions resolved)");
     println!();
-    println!("  PHASE 4 — TYPE TIGHTENING (VQL-UT Levels 4-6)");
+    println!("  PHASE 4 — TYPE TIGHTENING (VCL-total Levels 4-6)");
     println!("    Apply null-safety, injection-proofing, result-type checking.");
     println!("    Data failing these levels flagged for human review.");
     println!("    Drift score: ~0.15");
     println!();
-    println!("  PHASE 5 — CONVERGENCE (VQL-UT Levels 7-10)");
+    println!("  PHASE 5 — CONVERGENCE (VCL-total Levels 7-10)");
     println!("    Cardinality bounds, effect tracking, temporal consistency,");
     println!("    linearity. Formally verified recovery.");
     println!("    Drift score: approaches 0.0");

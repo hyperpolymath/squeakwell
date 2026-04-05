@@ -10,7 +10,7 @@ Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 == What Is This?
 
 A database recovery and reconstruction tool that uses VeriSimDB's octad model
-and VQL-UT's progressive type system to **reassemble damaged, fragmented, or
+and VCL-total's progressive type system to **reassemble damaged, fragmented, or
 inconsistent datasets** through cross-modal constraint propagation.
 
 Traditional recovery tools work at the storage level — reassembling bytes into
@@ -30,7 +30,7 @@ Damaged data (fragments, corruption, inconsistencies)
   (whatever you can recover goes into whichever modality has data)
         │
         ▼
-  PHASE 1 — LOOSE CONSTRAINTS (VQL-UT Levels 1-3)
+  PHASE 1 — LOOSE CONSTRAINTS (VCL-total Levels 1-3)
   Accept anything structurally valid. Parse, bind to schema, type-check.
   Drift score: ~0.8 (high — modalities disagree heavily)
         │
@@ -55,13 +55,13 @@ Damaged data (fragments, corruption, inconsistencies)
   Drift score: ~0.3 (contradictions resolved, consistency improving)
         │
         ▼
-  PHASE 4 — TIGHTENING (VQL-UT Levels 4-6)
+  PHASE 4 — TIGHTENING (VCL-total Levels 4-6)
   Apply null-safety, injection-proofing, result-type checking.
   Any data that can't satisfy these levels is flagged for human review.
   Drift score: ~0.15
         │
         ▼
-  PHASE 5 — CONVERGENCE (VQL-UT Levels 7-10)
+  PHASE 5 — CONVERGENCE (VCL-total Levels 7-10)
   Cardinality bounds, effect tracking, temporal consistency, linearity.
   Data that passes all 10 levels is formally verified as recovered.
   Drift score: approaches 0.0
@@ -90,11 +90,11 @@ by the others:
 | Temporal history | Provenance chain (hash-chain ordering)
 | Provenance | Temporal versions (timestamp ordering)
 | Spatial coordinates | Graph proximity, Document georeferences
-| Semantic types | Infer from Graph + Document + VQL-UT type checking
+| Semantic types | Infer from Graph + Document + VCL-total type checking
 | Tensor data | Vector embeddings (expand dimensions), raw data re-ingest
 |===
 
-**Progressive typing is the ratchet.** Each VQL-UT level constrains the
+**Progressive typing is the ratchet.** Each VCL-total level constrains the
 solution space further. Level 1 accepts almost anything. Level 10 demands
 formal proof. Data can only become more consistent through the levels,
 never less. This is constraint propagation applied to database recovery.
@@ -115,8 +115,8 @@ function: recovery is complete when cross-modal drift approaches zero.
   - Phase 1: Loose acceptance + schema inference
   - Phase 2: Cross-modal inference (fill missing modalities)
   - Phase 3: Conflict resolution (provenance + temporal + semantic arbitration)
-  - Phase 4: Type tightening (VQL-UT levels 4-6)
-  - Phase 5: Convergence (VQL-UT levels 7-10)
+  - Phase 4: Type tightening (VCL-total levels 4-6)
+  - Phase 5: Convergence (VCL-total levels 7-10)
 
 * **Idris2 type kernel** (`src/abi/`) — Formal proofs that:
   - Constraint propagation is monotonic (data only gets more consistent)
@@ -124,8 +124,8 @@ function: recovery is complete when cross-modal drift approaches zero.
   - Conflict resolution is deterministic (same input → same output)
   - Type ratchet is sound (passing level N implies passing levels 1..N-1)
 
-* **VQL-UT integration** — Uses TypedQLiser as the type-checking layer.
-  Each phase invokes progressively stricter VQL-UT levels.
+* **VCL-total integration** — Uses TypedQLiser as the type-checking layer.
+  Each phase invokes progressively stricter VCL-total levels.
 
 * **Output** — Reconstructed database in VeriSimDB format (all 8 modalities
   populated), with per-entity confidence scores, proof certificates, and

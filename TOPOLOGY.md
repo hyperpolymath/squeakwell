@@ -5,7 +5,7 @@
 
 ## Purpose
 
-Octad-Recover (working title) is a database recovery and reconstruction tool using VeriSimDB's octad model and VQL-UT's progressive type system to reassemble damaged, fragmented, or inconsistent datasets through cross-modal constraint propagation. Enables recovery from incomplete or corrupted data via formal verification and constraint solving.
+Octad-Recover (working title) is a database recovery and reconstruction tool using VeriSimDB's octad model and VCL-total's progressive type system to reassemble damaged, fragmented, or inconsistent datasets through cross-modal constraint propagation. Enables recovery from incomplete or corrupted data via formal verification and constraint solving.
 
 ## Module Map
 
@@ -26,7 +26,7 @@ squeakwell/
 ```
 [Damaged Dataset] ──► [Fragment Detection] ──► [Constraint Mapping] ──► [Octad Model]
                                                        ↓
-                                              [Type Inference (VQL-UT)] ──► [Reconstruction]
+                                              [Type Inference (VCL-total)] ──► [Reconstruction]
                                                        ↓
                                               [Verification] ──► [Recovered Data]
 ```
@@ -35,5 +35,5 @@ squeakwell/
 
 - **Octad model**: VeriSimDB's data structure representation
 - **Constraint propagation**: Cross-modal consistency enforcement
-- **Type system**: VQL-UT progressive types guide recovery
+- **Type system**: VCL-total progressive types guide recovery
 - **Verification**: Formal proofs of recovery correctness

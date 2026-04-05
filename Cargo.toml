@@ -7,7 +7,7 @@ authors = ["Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"]
 description = "Database recovery through cross-modal constraint propagation — 8 modalities as witnesses, progressive type ratchet, drift-to-zero convergence"
 license = "PMPL-1.0-or-later"
 repository = "https://github.com/hyperpolymath/squeakwell"
-keywords = ["database", "recovery", "constraint-propagation", "verisimdb", "formal-verification"]
+keywords = ["database", "recovery", "constraint-propagation", "verisim", "formal-verification"]
 categories = ["command-line-utilities", "database"]
 
 [[bin]]

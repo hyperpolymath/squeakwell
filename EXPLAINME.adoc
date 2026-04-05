@@ -9,9 +9,9 @@ The README makes claims. This file backs them up.
 
 === Claim 1: Cross-Modal Constraint Convergence Recovers Damaged Data Through 5-Phase Constraint Propagation
 
-*From README:* "A database recovery and reconstruction tool that uses VeriSimDB's octad model and VQL-UT's progressive type system to reassemble damaged, fragmented, or inconsistent datasets through cross-modal constraint propagation... Data that passes all 10 levels is formally verified as recovered."
+*From README:* "A database recovery and reconstruction tool that uses VeriSimDB's octad model and VCL-total's progressive type system to reassemble damaged, fragmented, or inconsistent datasets through cross-modal constraint propagation... Data that passes all 10 levels is formally verified as recovered."
 
-*Evidence:* The core reconstruction engine at `src/engine/` implements the 5-phase progressive constraint propagation: Phase 1 (Loose Constraints, VQL-UT Levels 1-3) accepts anything structurally valid; Phase 2 (Cross-Modal Inference) uses populated modalities to infer missing ones (document text → graph edges via NER, graph edges → semantic annotations); Phase 3 (Conflict Resolution) arbitrates contradictions via provenance chains and temporal versions; Phase 4 (Tightening, VQL-UT Levels 4-6) enforces null-safety and injection-proofing; Phase 5 (Convergence, VQL-UT Levels 7-10) achieves cardinality bounds and linearity. The Idris2 type kernel at `src/abi/` provides formal proofs that constraint propagation is monotonic (data only gets more consistent) and conflict resolution is deterministic. Each entity is assigned a confidence score and proof certificate indicating which VQL-UT levels it passes. **Caveat:** This is concept stage; only the architecture and proof framework are defined. Implementation of all 5 phases and integration with VeriSimDB/VQL-UT is still in development.
+*Evidence:* The core reconstruction engine at `src/engine/` implements the 5-phase progressive constraint propagation: Phase 1 (Loose Constraints, VCL-total Levels 1-3) accepts anything structurally valid; Phase 2 (Cross-Modal Inference) uses populated modalities to infer missing ones (document text → graph edges via NER, graph edges → semantic annotations); Phase 3 (Conflict Resolution) arbitrates contradictions via provenance chains and temporal versions; Phase 4 (Tightening, VCL-total Levels 4-6) enforces null-safety and injection-proofing; Phase 5 (Convergence, VCL-total Levels 7-10) achieves cardinality bounds and linearity. The Idris2 type kernel at `src/abi/` provides formal proofs that constraint propagation is monotonic (data only gets more consistent) and conflict resolution is deterministic. Each entity is assigned a confidence score and proof certificate indicating which VCL-total levels it passes. **Caveat:** This is concept stage; only the architecture and proof framework are defined. Implementation of all 5 phases and integration with VeriSimDB/VCL-total is still in development.
 
 === Claim 2: Eight Independent Representations (Octad Modalities) as Mutual Witnesses for Entity Identity
 
@@ -29,7 +29,7 @@ The README makes claims. This file backs them up.
 | **Idris2** | Formal proofs for constraint propagation soundness
 | **Zig** | C-ABI FFI layer (hyperpolymath standard)
 | **VeriSimDB** | Octad data model and storage backend
-| **VQL-UT** | Progressive type system (10 levels) for recovery verification
+| **VCL-total** | Progressive type system (10 levels) for recovery verification
 |===
 
 == Dogfooded Across The Account
@@ -53,15 +53,15 @@ Part of the -iser ecosystem for domain-specific query and recovery tools (TypedQ
 | `src/engine/` | Core reconstruction engine: 5-phase constraint propagation
 | `src/engine/inference.rs` | Cross-modal inference: document→graph, document→vector, graph→semantic, provenance→temporal, etc.
 | `src/engine/conflict_resolution.rs` | Conflict resolution: provenance + temporal + semantic arbitration
-| `src/engine/type_tightening.rs` | Type tightening: VQL-UT levels 4-6 enforcement
-| `src/engine/convergence.rs` | Convergence: VQL-UT levels 7-10 formal verification
+| `src/engine/type_tightening.rs` | Type tightening: VCL-total levels 4-6 enforcement
+| `src/engine/convergence.rs` | Convergence: VCL-total levels 7-10 formal verification
 | `src/abi/` | Idris2 type kernel with formal proofs of monotonicity, determinism, soundness
 | `src/abi/constraints.idr` | Constraint propagation proofs
 | `src/abi/identity.idr` | Cross-modal entity identity preservation proofs
 | `src/abi/ratchet.idr` | Type ratchet soundness (data only gets more consistent)
 | `ffi/zig/src/` | C-ABI FFI bridge to Idris2 kernel (hyperpolymath standard)
-| `src/verisimdb_adapter.rs` | Integration with VeriSimDB octad model
-| `src/vql_ut_adapter.rs` | Integration with VQL-UT progressive type system
+| `src/verisim_adapter.rs` | Integration with VeriSimDB octad model
+| `src/vcl_ut_adapter.rs` | Integration with VCL-total progressive type system
 | `README.adoc` | Full architecture, design rationale, naming options
 |===
 

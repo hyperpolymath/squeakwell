@@ -93,7 +93,7 @@ fn recover_all_five_phases_complete() {
         .expect("recover should complete all phases");
 }
 
-/// Requesting target_level 1 limits recovery to phase 1 VQL-UT checks only.
+/// Requesting target_level 1 limits recovery to phase 1 VCL-total checks only.
 #[test]
 fn recover_target_level_one_does_not_error() {
     let tmp = scratch_dir();

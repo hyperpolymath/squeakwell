@@ -160,7 +160,7 @@ fn entity_confidence_json_round_trip() {
     assert_eq!(restored.modalities_populated, original.modalities_populated);
 }
 
-/// max_type_level must be in 1-10 (VQL-UT type ratchet levels).
+/// max_type_level must be in 1-10 (VCL-total type ratchet levels).
 #[test]
 fn entity_confidence_max_type_level_range() {
     for level in 1u8..=10 {

@@ -3,11 +3,11 @@
 //
 // Recovery engine — the core of SqueakWell.
 // Runs 5-phase progressive constraint propagation:
-//   Phase 1: Loose acceptance (VQL-UT L1-3)
+//   Phase 1: Loose acceptance (VCL-total L1-3)
 //   Phase 2: Cross-modal inference
 //   Phase 3: Conflict resolution
-//   Phase 4: Type tightening (VQL-UT L4-6)
-//   Phase 5: Convergence (VQL-UT L7-10)
+//   Phase 4: Type tightening (VCL-total L4-6)
+//   Phase 5: Convergence (VCL-total L7-10)
 //
 // VeriSimDB integration: recovery sessions and per-phase events are persisted
 // to VeriSimDB (collections: squeakwell:sessions, squeakwell:phase-events).
@@ -16,7 +16,7 @@
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use crate::verisimdb::{VeriSimDbClient, phase_event_doc, session_doc};
+use crate::verisim::{VeriSimDbClient, phase_event_doc, session_doc};
 
 /// Current state of a recovery session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,11 +77,11 @@ pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterat
 
     for phase in 1..=5u8 {
         let phase_name = match phase {
-            1 => "Loose Acceptance (VQL-UT L1-3)",
+            1 => "Loose Acceptance (VCL-total L1-3)",
             2 => "Cross-Modal Inference",
             3 => "Conflict Resolution",
-            4 => "Type Tightening (VQL-UT L4-6)",
-            5 => "Convergence (VQL-UT L7-10)",
+            4 => "Type Tightening (VCL-total L4-6)",
+            5 => "Convergence (VCL-total L7-10)",
             _ => unreachable!(),
         };
 
@@ -99,13 +99,13 @@ pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterat
             1 => 1..=3u8,
             4 => 4..=6,
             5 => 7..=10,
-            _ => 0..=0, // phases 2-3 don't use VQL-UT levels directly
+            _ => 0..=0, // phases 2-3 don't use VCL-total levels directly
         };
 
         if phase_levels.start() > &0 {
             for level in phase_levels {
                 if level > target_level { break; }
-                println!("  Checking VQL-UT Level {}...", level);
+                println!("  Checking VCL-total Level {}...", level);
             }
         }
 
