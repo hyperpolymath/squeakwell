@@ -2,6 +2,8 @@
 # squeakwell — Database recovery through cross-modal constraint propagation
 
 # Default: build and test
+import? "contractile.just"
+
 default: build test
 
 # Build release binary
