@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: CC-BY-SA-4.0
 // Template: QUICKSTART-USER.adoc — 5-minute path to working software
 // Replace squeakwell, Squeakwell — See README.adoc for details., just run, Squeakwell started successfully. with actuals
 = squeakwell — Quick Start for Users
