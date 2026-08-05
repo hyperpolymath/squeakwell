@@ -1,34 +1,34 @@
-= {{PROJECT_NAME}} - Citation Guide
+= Octad-Recover (working title — see naming section below) - Citation Guide
 :toc:
 
 == BibTeX
 
 [source,bibtex]
 ----
-@software{{{PROJECT_NAME}}_2026,
-  author = {{{AUTHOR_LAST}}, {{AUTHOR_FIRST}}},
-  title = {{{PROJECT_NAME}}},
+@software{Octad-Recover (working title — see naming section below)_2026,
+  author = {Jewell, Jonathan},
+  title = {Octad-Recover (working title — see naming section below)},
   year = {2026},
-  url = {https://github.com/hyperpolymath/{{PROJECT_NAME}}},
+  url = {https://github.com/hyperpolymath/Octad-Recover (working title — see naming section below)},
   license = {MPL-2.0}
 }
 ----
 
 == Harvard Style
 
-{{AUTHOR_LAST}}, {{AUTHOR_INITIALS}} (2026) _{{PROJECT_NAME}}_ [Computer software]. Available at: https://github.com/hyperpolymath/{{PROJECT_NAME}}
+Jewell, JDJ (2026) _Octad-Recover (working title — see naming section below)_ [Computer software]. Available at: https://github.com/hyperpolymath/Octad-Recover (working title — see naming section below)
 
 == OSCOLA
 
-Jonathan D.A. Jewell, '{{PROJECT_NAME}}' (2026) <https://github.com/hyperpolymath/{{PROJECT_NAME}}>
+Jonathan D.A. Jewell, 'Octad-Recover (working title — see naming section below)' (2026) <https://github.com/hyperpolymath/Octad-Recover (working title — see naming section below)>
 
 == MLA
 
-{{AUTHOR_LAST}}, {{AUTHOR_FIRST}} "{{PROJECT_NAME}}." 2026, github.com/hyperpolymath/{{PROJECT_NAME}}.
+Jewell, Jonathan "Octad-Recover (working title — see naming section below)." 2026, github.com/hyperpolymath/Octad-Recover (working title — see naming section below).
 
 == APA 7
 
-{{AUTHOR_LAST}}, {{AUTHOR_INITIALS}} (2026). _{{PROJECT_NAME}}_ [Computer software]. GitHub. https://github.com/hyperpolymath/{{PROJECT_NAME}}
+Jewell, JDJ (2026). _Octad-Recover (working title — see naming section below)_ [Computer software]. GitHub. https://github.com/hyperpolymath/Octad-Recover (working title — see naming section below)
 
 == See Also
 
