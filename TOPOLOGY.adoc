@@ -1,15 +1,17 @@
-<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
-<!-- Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk> -->
+== TOPOLOGY.md — squeakwell
 
-# TOPOLOGY.md — squeakwell
+=== Purpose
 
-## Purpose
+Octad-Recover (working title) is a database recovery and reconstruction
+tool using VeriSimDB’s octad model and VCL-total’s progressive type
+system to reassemble damaged, fragmented, or inconsistent datasets
+through cross-modal constraint propagation. Enables recovery from
+incomplete or corrupted data via formal verification and constraint
+solving.
 
-Octad-Recover (working title) is a database recovery and reconstruction tool using VeriSimDB's octad model and VCL-total's progressive type system to reassemble damaged, fragmented, or inconsistent datasets through cross-modal constraint propagation. Enables recovery from incomplete or corrupted data via formal verification and constraint solving.
+=== Module Map
 
-## Module Map
-
-```
+....
 squeakwell/
 ├── src/                 # Rust implementation
 │   ├── octad/          # Octad model core
@@ -19,21 +21,21 @@ squeakwell/
 ├── tests/              # Comprehensive test suite
 ├── benches/            # Performance benchmarks
 └── Cargo.toml          # Rust package manifest
-```
+....
 
-## Data Flow
+=== Data Flow
 
-```
+....
 [Damaged Dataset] ──► [Fragment Detection] ──► [Constraint Mapping] ──► [Octad Model]
                                                        ↓
                                               [Type Inference (VCL-total)] ──► [Reconstruction]
                                                        ↓
                                               [Verification] ──► [Recovered Data]
-```
+....
 
-## Key Components
+=== Key Components
 
-- **Octad model**: VeriSimDB's data structure representation
-- **Constraint propagation**: Cross-modal consistency enforcement
-- **Type system**: VCL-total progressive types guide recovery
-- **Verification**: Formal proofs of recovery correctness
+* *Octad model*: VeriSimDB’s data structure representation
+* *Constraint propagation*: Cross-modal consistency enforcement
+* *Type system*: VCL-total progressive types guide recovery
+* *Verification*: Formal proofs of recovery correctness
