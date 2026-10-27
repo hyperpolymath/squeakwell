@@ -13,10 +13,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-mod abi;
-mod engine;
-mod ingest;
-mod manifest;
+use squeakwell::{engine, ingest};
 
 /// SqueakWell — stop your database squealing.
 /// Cross-modal constraint propagation recovery.

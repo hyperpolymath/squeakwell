@@ -169,9 +169,6 @@ impl Default for VeriSimDbClient {
 /// alongside the engine state fields.
 pub fn session_doc(session_id: &str, workdir: &str, state: &Value) -> Value {
     let now = chrono::Utc::now().to_rfc3339();
-    let mut doc = state.clone();
-    let obj = doc.as_object_mut().unwrap_or(&mut serde_json::Map::new().into());
-    // This is a convenience wrapper; if state is not an object we wrap it.
     json!({
         "session_id": session_id,
         "workdir": workdir,
