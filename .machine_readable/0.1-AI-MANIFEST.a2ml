@@ -12,12 +12,12 @@ description: |
   automation scripts.
 
 canonical_locations:
-  state: "STATE.a2ml"
-  meta: "META.a2ml"
-  ecosystem: "ECOSYSTEM.a2ml"
-  agentic: "AGENTIC.a2ml"
-  neurosym: "NEUROSYM.a2ml"
-  playbook: "PLAYBOOK.a2ml"
+  state: "descriptiles/STATE.a2ml"
+  meta: "descriptiles/META.a2ml"
+  ecosystem: "descriptiles/ECOSYSTEM.a2ml"
+  agentic: "descriptiles/AGENTIC.a2ml"
+  neurosym: "descriptiles/NEUROSYM.a2ml"
+  playbook: "descriptiles/PLAYBOOK.a2ml"
   anchors: "anchors/"
   policies: "policies/"
   ai_configs: "ai/"

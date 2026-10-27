@@ -6,8 +6,7 @@
 # Then hands off to `just setup` for project-specific configuration.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/hyperpolymath/squeakwell/main/setup.sh | sh
-#   # or after cloning:
+#   # After cloning and reviewing this script:
 #   ./setup.sh
 #
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath)
@@ -128,6 +127,69 @@ detect_platform() {
     esac
 }
 
+# Download a pinned release and verify it before extracting or installing.
+# Version matches .tool-versions; hashes are from the release's .sha256sum assets:
+# https://github.com/casey/just/releases/tag/1.36.0
+install_just_release() (
+    just_version=1.36.0
+    just_extension=tar.gz
+    just_binary=just
+    case "$OS:$ARCH" in
+        linux:x86_64)
+            just_target=x86_64-unknown-linux-musl
+            just_sha256=bc7c9f377944f8de9cd0418b11d2955adebfa25a488c0b5e3dd2d2c0e9d732da ;;
+        linux:aarch64)
+            just_target=aarch64-unknown-linux-musl
+            just_sha256=bb3886b15e2cbcb9c0eb19956297d36de4eaef45b89d3f5fa5d1fc4ed3b5b51d ;;
+        linux:armv6l)
+            just_target=arm-unknown-linux-musleabihf
+            just_sha256=10623ae382835ddbc4173df90e58dc6dab5a4507a02a8f78a94a5a76afe06d02 ;;
+        linux:armv7l)
+            just_target=armv7-unknown-linux-musleabihf
+            just_sha256=23f7a593b3ccba6898b25e05db18c0604171fefec11cf051429fd0d205018e54 ;;
+        macos:x86_64)
+            just_target=x86_64-apple-darwin
+            just_sha256=30aacf9cbf021c2ff36fff5a05c800360e2020e527916e1c0960452ef5a8568c ;;
+        macos:arm64)
+            just_target=aarch64-apple-darwin
+            just_sha256=e7a824c4d92cdea270b61474bd48e851aedc4c65f9c5245c12b32df6de9b536f ;;
+        windows:x86_64)
+            just_target=x86_64-pc-windows-msvc
+            just_sha256=7c0d56a07d51ddc4cdc2bd7d1e7e0223ada0281bc06bd482b8918102acf037fe
+            just_extension=zip
+            just_binary=just.exe ;;
+        *) fail "No verified just release for $OS/$ARCH. Install manually: https://just.systems/"; exit 1 ;;
+    esac
+
+    just_tmp=$(mktemp -d) || exit 1
+    trap 'rm -rf "$just_tmp"' 0
+    trap 'exit 1' 1 2 3 15
+    just_archive="$just_tmp/just.$just_extension"
+    curl -fsSL "https://github.com/casey/just/releases/download/$just_version/just-$just_version-$just_target.$just_extension" \
+        -o "$just_archive" || exit 1
+
+    if command -v sha256sum >/dev/null 2>&1; then
+        just_actual=$(sha256sum "$just_archive") || exit 1
+    elif command -v shasum >/dev/null 2>&1; then
+        just_actual=$(shasum -a 256 "$just_archive") || exit 1
+    else
+        fail "SHA-256 verification requires sha256sum or shasum"
+        exit 1
+    fi
+    if [ "${just_actual%% *}" != "$just_sha256" ]; then
+        fail "just release checksum mismatch"
+        exit 1
+    fi
+
+    if [ "$just_extension" = zip ]; then
+        unzip -q "$just_archive" "$just_binary" -d "$just_tmp" || exit 1
+    else
+        tar -xzf "$just_archive" -C "$just_tmp" "$just_binary" || exit 1
+    fi
+    chmod 755 "$just_tmp/$just_binary" || exit 1
+    cp "$just_tmp/$just_binary" "/usr/local/bin/$just_binary" || exit 1
+)
+
 # ── Install just ──
 install_just() {
     if command -v just >/dev/null 2>&1; then
@@ -140,8 +202,8 @@ install_just() {
     case "$PKG_MGR" in
         dnf)        sudo dnf install -y just ;;
         apt)        sudo apt-get install -y just 2>/dev/null || {
-                        # just not in older apt repos — use installer
-                        curl -fsSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+                        # just not in older apt repos — use a verified release
+                        install_just_release || return 1
                     } ;;
         pacman)     sudo pacman -S --noconfirm just ;;
         apk)        sudo apk add just ;;
@@ -152,8 +214,8 @@ install_just() {
         guix)       guix install just ;;
         nix)        nix-env -iA nixpkgs.just ;;
         *)
-            info "Using just installer script..."
-            curl -fsSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+            info "Using a verified just release..."
+            install_just_release || return 1
             ;;
     esac
 
