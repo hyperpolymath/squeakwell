@@ -163,10 +163,11 @@ impl Default for VeriSimDbClient {
 // Convenience constructors for common document shapes
 // ---------------------------------------------------------------------------
 
-/// Build a session document from a `RecoveryState` value.
+/// Build a session document from a recovery state value.
 ///
-/// Adds a `session_id`, `workdir`, and ISO-8601 `updated_at` field
-/// alongside the engine state fields.
+/// The returned object contains `session_id`, `workdir`, and `updated_at`
+/// (the current UTC time in RFC 3339 format). The supplied `state` is nested
+/// under the `state` key, including when it is not a JSON object.
 pub fn session_doc(session_id: &str, workdir: &str, state: &Value) -> Value {
     let now = chrono::Utc::now().to_rfc3339();
     json!({
