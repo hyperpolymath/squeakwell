@@ -54,7 +54,7 @@ Part of the -iser ecosystem for domain-specific query and recovery tools (TypedQ
 | `src/engine/mod.rs` | 5-phase loop skeleton and status/confidence/review/export entry points (stub: no fixpoint, no measure)
 | `src/abi/mod.rs` | The five invariants, restated honestly; no proofs yet
 | `src/verisim.rs` | VeriSimDB HTTP client (currently targets routes `verisim-api` does not expose; re-targeting is Phase 1 work)
-| `src/interface/ffi/` | Zig C-ABI bridge template (not built by CI)
+| `src/interface/ffi/` | Deliberately empty: the unbuilt Zig template was deleted on 2026-11-05; an Idris2 ABI must exist first
 | `tests/` | 23 tests (unit, proptest, e2e) against the stubs
 | `docs/ROUTE-PLAN.adoc` | Architecture options, what else must be created across the estate, the proof ladder, the engineering session plan
 | `README.adoc` | Full architecture, design rationale, naming options

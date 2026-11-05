@@ -1,1 +1,12 @@
-= ffi Logic
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= ffi (deliberately empty)
+
+The Zig C-ABI bridge template that lived here was deleted on 2026-11-05 by
+owner decision (`docs/ROUTE-PLAN.adoc` section 9). It was never built: its
+`build.zig` referenced an include file and a bench that did not exist, and
+there is no Idris2 ABI for it to bridge. Under the hyperpolymath ABI-FFI
+standard the truth lives in `../abi/` as Idris2 and the Zig implementation
+follows it; until `src/interface/abi/Program.idr` (the program IR, journal and
+gate wire contracts, task T22 in the route plan) exists, a bridge here would
+describe nothing. This directory and its manifest are kept so the interface
+unit's `canonical_locations` stay valid.

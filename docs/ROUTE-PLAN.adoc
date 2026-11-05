@@ -826,8 +826,8 @@ runs the experiments and refuses to pass anything it did not run.
   T10, T14 | squeakwell | yes
 | T19 | Upstream issues with file:line evidence and E1/E4 numbers: verisimdb
   (propose/apply, create-with-id, `/full`, drift library, Document→Graph,
-  resolve kernel, fixed threshold, Recovery.v), vcl-ut (weaken, Residue
-  justification, Epistemic 149, batching, schema builder), echo-types
+  resolve kernel, fixed threshold, Recovery.v), vcl-ut (weaken, the RECOVER verb
+  with evidence slot and Residue payload, Epistemic 149, batching, schema builder), echo-types
   (EchoPartialSection, EchoFibreIntersection, wire EchoTruncation),
   tropical-types (HubCeiling, reachGrade, Isabelle status) | T17, T18 |
   elsewhere | yes
@@ -861,34 +861,43 @@ Everything else runs beside it.
 
 == 9. Decisions for the owner
 
-Each decision names the default arm per doctrine 15 and says what each option
-causes.
+Decided by the owner on 2026-11-05 through the selector. The default arm per
+doctrine 15 is marked; where the owner departed from it, the departure is
+recorded with its consequence.
 
-. **Coupling arm.** *Default: the compiler route (D with A's kernel).* Option
-  B-first means waiting on six verisimdb routes before any recovery runs.
-  Option A-only means duplicating two private server semantics and accepting
-  an offline switch. Option C adds about 300 lines of session mapping and a
-  privacy leak channel for no recovery power.
-. **Proof source of truth.** *Default: Agda-first in echo-types, Rocq
-  instantiation second,* as the standing directive says. Rocq-first is faster
-  to a green light and is allowed by the directive's second clause if the
-  docstring says why; it would get `Recovery.v` compiled within hours of
-  installing `coqc`.
-. **vcl-ut extension scope.** *Default: Option 1, additive `RepairJustification`
-  constructors (`LastWriter`, `Reconstructed Modality Residue`)*, which reopens
-  no proof. Option 2 adds a `RECOVER` verb with an evidence slot and reopens
-  totality cases in six functions. Option 0 changes nothing upstream and keeps
-  squeakwell's mapping table as documentation only.
-. **The L10 conjecture.** *Default: park it* behind the three vcl-ut fixes it
-  needs, and label squeakwell's output Believes (KD45) rather than Knows until a
+. **Coupling arm: the compiler route (D with A's kernel).** Default arm,
+  accepted. Option B-first would have waited on six verisimdb routes; A-only
+  would have duplicated two private server semantics; C added session mapping
+  and a privacy leak channel for no recovery power.
+. **Proof source of truth: Agda first in echo-types.** Default arm, accepted.
+  `EchoPartialSection.agda` lands first; `verisimdb/formal/Recovery.v` is its
+  instantiation and the statements are compared per PROOF-POLICY section 3.
+  Consequence: the first mechanised result waits on an Agda toolchain being
+  installed where agents run (section 10); the R0 property tests are the
+  interim evidence.
+. **vcl-ut extension: Option 2, a `RECOVER` verb with an evidence slot.**
+  *Departure from the default arm* (additive `RepairJustification`
+  constructors). The owner chose the verb. Consequence: `TRecover SubjectRef
+  RepairJustification (Maybe Expr) SafetyLevel` and `Grammar.Verb VRecover`
+  reopen the totality cases in `transitionEvidence`, `transitionLevel`,
+  `transitionVerb`, `subjectsDistinct`, `decTransition`, `enc_transition` and
+  the gate's `transition_shape`; `certifiedSubjectsDistinct` survives if
+  `transitionAdmissible` keeps its conjunctive shape. The evidence slot gives
+  `RECOVER e WHERE drift < $1` the L4 injection-polarity check that NORMALISE
+  lacks. A rung above 4 still needs a new decider and soundness lemma in the
+  `Transition.idr` reflection style (for example `residueBounded`). The
+  additive `Residue` constructors of Option 1 ride inside the same change as the
+  justification payload, so Option 2 strictly contains Option 1. The upstream
+  issue (section 10) is filed as Option 2 with this list of reopened cases;
+  until it lands, squeakwell lowers `RECOVER` lines to `NORMALISE FROM
+  AUTHORITATIVE` and records the downgrade in the certificate log.
+. **The L10 conjecture: parked** behind the three vcl-ut fixes it needs;
+  squeakwell's epistemic output is labelled Believes (KD45) until a
   completeness argument for the enumeration exists.
-. **Name.** The README still brainstorms; `squeakwell` is the crate, repository
-  and clade name. *Default: keep `squeakwell`* and retire the "Octad-Recover"
-  working title; `resurgam` or `cpr` would mean renaming across the estate's
-  identity registry.
-. **Zig FFI.** *Default: delete `src/interface/ffi`* and record that an Idris2
-  ABI must exist first; the alternative is to fix `build.zig` to reference only
-  files that exist and leave it unbuilt.
+. **Name: `squeakwell` is kept.** The "Octad-Recover" working title is retired;
+  the README's naming table stays as the record of the alternatives considered.
+. **Zig FFI: `src/interface/ffi` is deleted.** A one-paragraph README records
+  that an Idris2 ABI must exist before a C-ABI bridge means anything.
 
 == 10. Beyond this repository
 
@@ -901,7 +910,8 @@ Issues to file once the MVP numbers exist (T19), one per line:
   boundary; `formal/Recovery.v` and the `Normalizer.v` functorisation; the
   CROSS-REPO-MAP rows that cite unwired echo-types modules; auth-on and
   loopback defaults for recovery deployments.
-* vcl-ut: `weaken`; `RepairJustification` extension; `Epistemic.idr` line 149
+* vcl-ut: `weaken`; the `RECOVER` verb with evidence slot (owner's choice, Option 2,
+  carrying the `Residue` payload); `Epistemic.idr` line 149
   and Believes/Knows; batching; exported schema-JSON builder; register
   squeakwell as a gate consumer.
 * echo-types: `EchoPartialSection`; `EchoFibreIntersection`; wire
