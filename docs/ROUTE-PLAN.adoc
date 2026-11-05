@@ -424,6 +424,16 @@ before any dependent write), `round-N.vcl`, `params-N.json`, `certs-N.jsonl`,
 `effects-N.jsonl`, `review-N.vcl`. Everything the user will read contains ids,
 hashes, counts, levels and exit codes, never recovered values.
 
+Crash between create and binding: a crash after `POST /octads` succeeds but
+before `bindings.json` is written would leave an unbound octad and a resume
+could create a duplicate. The binding is therefore written in two phases: an
+*intent* record (deterministic entity key, also placed in
+`OctadRequest.metadata`) before the POST, and a *confirmation* with the UUID
+after it. On resume an unconfirmed intent is reconciled by searching the
+server for its metadata key before any new create; once the client-chosen id
+item in section 5.1 lands, the intent phase collapses into `POST /octads/{id}`.
+T14 carries this as a done-when.
+
 === 4.4 The honest grading rule
 
 For each entity e squeakwell emits one `DECLARE <mod>.<field> FROM OCTAD 'e'
@@ -435,7 +445,8 @@ is admissible. It says nothing about the values (they travel in `$n`), L2 is
 near-vacuous on parsed input, and L7–L10 are reported as *not expressible from
 text (vcl-ut #25)*, never as achieved. Phase 5 is re-scoped from "levels 7–10"
 to: fixpoint reached, gate-admissible at 6/4, provenance chain verifies, server
-drift agrees with local expectation.
+drift agrees with local expectation. Repaired values themselves are unverified
+until the server can return modality content (`GET /octads/{id}/full`).
 
 === 4.5 Aspects the design must honour regardless of option
 
@@ -449,6 +460,10 @@ drift agrees with local expectation.
   presence on update); one provenance record per executed statement keyed by
   its SHA-256; `GET /provenance/{id}/verify` before export; the server's actor
   string is client-supplied, so the chain is tamper-evident, not authenticated.
+  Flags, counts and statement-hash provenance do not verify the *value* a
+  `NORMALISE` repair produced: repaired values stay unverified until
+  `GET /octads/{id}/full` exists upstream (section 5.1); until then export
+  labels them `derived` and the plan says so.
 * **Privacy.** Fragments, params and the review queue stay in the workdir;
   only agreed, singleton-fibre values are lowered; bind the recovery server to
   loopback or the podman network, enable auth, build the persistent image with
@@ -659,8 +674,9 @@ refutation. Every row is OPEN in the ledger until the named prover runs.
   fibres and never selects within one | `EchoEntropy.agda` 258-262 | echo-types
   Agda | hours
 
-| R15 | Reintroduction-statement grading: `certified_level(stmt(e), sch) ≥ 1`
-  implies every populated field resolves in the schema; ceiling 6 from text, 4
+| R15 | Reintroduction-statement grading: `∀ f ∈ populated(e). certified_level(stmt(e, f), sch) ≥ 1`
+  (one DECLARE per populated field) implies every populated field resolves in
+  the schema; ceiling 6 from text, 4
   for transitions; values never inspected | `vclt-gate` contract v1 | Idris2
   wire contract in squeakwell | small-medium
 
@@ -741,7 +757,8 @@ a message when `SQUEAKWELL_VERISIM_URL` or `SQUEAKWELL_VCLT_GATE` is unset.
 
 | E6 | Gate honesty: 100 % of DECLAREs at 6, NORMALISEs at 4; `EFFECTS` rejected
   at L0; a tensor-less NORMALISE admitted and *recorded as evidence* that exit
-  0 ≠ repair justified; exit 2 routes to review | all as stated
+  0 ≠ repair justified; exit 2 aborts the round before any network effect |
+  all as stated
 
 | E7 | Build weight: cold `cargo build` with the chosen dependency set | under
   two minutes; no `verisim-*` or `vcltotal-parse` in non-dev dependencies on
@@ -812,8 +829,10 @@ runs the experiments and refuses to pass anything it did not run.
 | T13 | `src/lower`: certified program → REST plan → execution; bindings
   written first; presence pre-check; statement-hash provenance; intent/effect
   reconciliation; MERGE refused | T10, T11, T09 | squeakwell | no
-| T14 | `src/journal`: round files, `replay`, `diff`, crash-resume | T13 |
-  squeakwell | no
+| T14 | `src/journal`: round files, `replay`, `diff`, crash-resume including the
+  two-phase binding (intent before create, confirmation after) and the
+  unconfirmed-intent reconciliation; done when a kill between create and
+  confirmation resumes without a duplicate octad | T13 | squeakwell | no
 | T15 | `src/engine`: compile–gate–execute–observe–resynthesise loop; fixed
   threshold; `mu` trajectory; `NotConverged`; round abort on `GateUnavailable`
   | T12, T13, T14 | squeakwell | no

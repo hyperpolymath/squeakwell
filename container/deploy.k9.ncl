@@ -13,9 +13,12 @@ K9!
 # carries the CLI and runs it as a batch job against a VeriSimDB instance.
 #
 # Usage:
-#   nickel typecheck container/deploy.k9.ncl
 #   k9-svc validate container/deploy.k9.ncl
 #   k9-svc deploy container/deploy.k9.ncl --env production
+#
+# Note: the first line is the K9 magic marker required by the K9 validator;
+# plain `nickel typecheck` does not apply to K9 files (k9-svc strips the
+# marker before handing the record to Nickel).
 
 {
   # ─────────────────────────────────────────────────────────────
@@ -69,16 +72,17 @@ K9!
     ],
     side_effects = [
       "Builds the squeakwell container image via container/ct-build.sh",
-      "Starts or stops the compose stack described in container/compose.toml",
+      "Runs one recovery batch with podman against the VeriSimDB named by VERISIMDB_URL",
+      "Removes the squeakwell-data volume on rollback",
       "Writes recovery working directories under the mounted /data volume",
     ],
 
     # L5: The Muscle — Deployment Recipes
     recipes = {
-      install = "just container-build",
-      validate = "just container-verify",
-      deploy = "just container-up",
-      migrate = "just container-build && just container-up",
+      install = "container/ct-build.sh",
+      validate = "podman run --rm ghcr.io/hyperpolymath/squeakwell:latest --version",
+      deploy = "podman run --rm -v squeakwell-data:/data -e VERISIMDB_URL ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
+      migrate = "container/ct-build.sh && podman run --rm -v squeakwell-data:/data -e VERISIMDB_URL ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
     },
   },
 
@@ -98,8 +102,10 @@ K9!
       image = "ghcr.io/hyperpolymath/squeakwell",
       entrypoint = "squeakwell",
       data_volume = "/data",
-      # The VeriSimDB instance the recovery writes to (overridable at run time).
-      verisimdb_url = "http://verisimdb:8080",
+      # The VeriSimDB instance the recovery writes to is supplied at run time
+      # through this environment variable (an https:// URL in production; the
+      # svalinn gateway in container/compose.toml terminates TLS).
+      verisimdb_url_env = "VERISIMDB_URL",
     },
 
     # Deployment strategy
@@ -110,34 +116,43 @@ K9!
   # Scripts (executed at Hunt level)
   # ─────────────────────────────────────────────────────────────
   scripts = {
-    # Pre-deployment validation
+    # Pre-deployment validation: the image exists and the CLI answers.
+    # container/compose.toml (the long-running service stack) is NOT used by
+    # this component: squeakwell is a batch job.
     pre_deploy = m%"
 #!/bin/sh
 set -eu
-echo "K9: Pre-deployment validation for squeakwell..."
-cd container && selur-compose verify || podman compose --file compose.toml config
+TAG="${IMAGE_TAG:-latest}"
+echo "K9: Pre-deployment validation for squeakwell:$TAG..."
+podman image inspect "ghcr.io/hyperpolymath/squeakwell:$TAG" >/dev/null
+podman run --rm "ghcr.io/hyperpolymath/squeakwell:$TAG" --version
 echo "K9: Validation passed."
 "%,
 
-    # Deployment script
+    # Deployment: build and verify the image, then run one recovery batch
+    # against the VeriSimDB named by VERISIMDB_URL (must be set; https in
+    # production). The working directory lives on the squeakwell-data volume.
     deploy = m%"
 #!/bin/sh
 set -eu
 ENV="${1:-dev}"
-echo "K9: Deploying squeakwell to $ENV environment..."
-cd container
-./ct-build.sh
-selur-compose up --detach || podman compose --file compose.toml up --detach
-echo "K9: Deployment to $ENV complete."
+TAG="${IMAGE_TAG:-latest}"
+: "${VERISIMDB_URL:?VERISIMDB_URL must be set (https:// in production)}"
+echo "K9: Building squeakwell image for $ENV..."
+cd container && ./ct-build.sh && cd ..
+echo "K9: Running one recovery batch against $VERISIMDB_URL..."
+podman run --rm -v squeakwell-data:/data -e VERISIMDB_URL \
+  "ghcr.io/hyperpolymath/squeakwell:$TAG" recover --workdir /data
+echo "K9: Batch for $ENV complete."
 "%,
 
-    # Rollback script
+    # Rollback: a batch job leaves no running service; rolling back means
+    # discarding the data volume written by the last batch.
     rollback = m%"
 #!/bin/sh
 set -eu
-echo "K9: Rolling back squeakwell deployment..."
-cd container
-selur-compose down || podman compose --file compose.toml down
+echo "K9: Rolling back the last squeakwell batch (removing squeakwell-data volume)..."
+podman volume rm squeakwell-data
 echo "K9: Rollback complete."
 "%,
   },

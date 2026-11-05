@@ -20,9 +20,11 @@
 //     measure is lexicographic on naturals:
 //       mu(o) = (|missing o|, nconflicts o)
 //     and the theorem is: step o = o  \/  mu(step o) <lex mu(o).
-//     Guarded fill (None -> Some only) is inflationary and monotone on the
-//     information order of partial octads; resolve copies the winner and
-//     never un-fills. Fixpoint within <= 8 fill steps (modality_cardinality)
+//     Guarded fill (None -> Some only) is inflationary on the information
+//     order of partial octads and never overwrites an observed value. It is
+//     NOT monotone on that order: for x below y, fill x may infer a value
+//     that y already holds differently. Resolve copies the winner and never
+//     un-fills. Fixpoint within <= 8 fill steps (modality_cardinality)
 //     plus one resolve pass (normalize_idempotent).
 //
 //   IdentityPreservation:
@@ -54,5 +56,6 @@
 //
 // Soundness of the output ("never export corrupt data") is stated
 // separately, in echo-types vocabulary: every exported entity inhabits the
-// fibre of the damage map over the observed fragments, and every
-// non-singleton fibre is in the review queue.
+// fibre of the damage map over the accepted fragments, every exported entity
+// has a singleton enumerated fibre (hits_y = 1), and every non-singleton
+// fibre is in the review queue and is refused by export.
