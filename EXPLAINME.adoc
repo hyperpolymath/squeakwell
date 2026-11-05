@@ -11,13 +11,13 @@ The README makes claims. This file backs them up.
 
 *From README:* "A database recovery and reconstruction tool that uses VeriSimDB's octad model and VCL-total's progressive type system to reassemble damaged, fragmented, or inconsistent datasets through cross-modal constraint propagation... Data that passes all 10 levels is formally verified as recovered."
 
-*Evidence:* The core reconstruction engine at `src/engine/` implements the 5-phase progressive constraint propagation: Phase 1 (Loose Constraints, VCL-total Levels 1-3) accepts anything structurally valid; Phase 2 (Cross-Modal Inference) uses populated modalities to infer missing ones (document text → graph edges via NER, graph edges → semantic annotations); Phase 3 (Conflict Resolution) arbitrates contradictions via provenance chains and temporal versions; Phase 4 (Tightening, VCL-total Levels 4-6) enforces null-safety and injection-proofing; Phase 5 (Convergence, VCL-total Levels 7-10) achieves cardinality bounds and linearity. The Idris2 type kernel at `src/abi/` provides formal proofs that constraint propagation is monotonic (data only gets more consistent) and conflict resolution is deterministic. Each entity is assigned a confidence score and proof certificate indicating which VCL-total levels it passes. **Caveat:** This is concept stage; only the architecture and proof framework are defined. Implementation of all 5 phases and integration with VeriSimDB/VCL-total is still in development.
+*Evidence:* The reconstruction engine at `src/engine/` is designed as 5-phase progressive constraint propagation: Phase 1 (Loose Constraints, VCL-total Levels 1-3) accepts anything structurally valid; Phase 2 (Cross-Modal Inference) uses populated modalities to infer missing ones (document text → graph edges via NER, graph edges → semantic annotations); Phase 3 (Conflict Resolution) arbitrates contradictions via provenance chains and temporal versions; Phase 4 (Tightening, VCL-total Levels 4-6) enforces null-safety and injection-proofing; Phase 5 (Convergence, VCL-total Levels 7-10) achieves cardinality bounds and linearity. `src/abi/mod.rs` states the invariants the engine must satisfy, in the form an honest mechanisation can target (lexicographic progress rather than monotone real-valued drift; identity preservation; purity of resolve; the VCL-UT ratchet; well-founded termination). **Caveat (2026-11-04):** this is concept stage. The engine, ingest and VeriSimDB client are stubs; no Idris2 proofs exist in this repository yet; VCL-UT can only certify levels L0–L6 from source today. The route to closing each of these gaps is `docs/ROUTE-PLAN.adoc`.
 
 === Claim 2: Eight Independent Representations (Octad Modalities) as Mutual Witnesses for Entity Identity
 
 *From README:* "When you have 8 independent representations of the same entity, damage to any one can be compensated by the others... Eight witnesses are better than one."
 
-*Evidence:* The design document in the README details the octad modality set: Document text (natural language), Graph edges (semantic relationships), Vector embeddings (latent space), Temporal history (version chains), Provenance metadata (hash chains), Spatial coordinates (geospatial data), Semantic types (formal schema), Tensor data (numerical arrays). The cross-modal inference logic at `src/engine/inference.rs` implements transformations: document text → graph edges via NER, document text → vector embedding via encoding, graph edges → semantic annotations via type inference, provenance → temporal ordering via hash-chain sequencing, spatial coords → graph proximity via spatial join, tensor data → vector projections via dimensionality reduction. When any modality is damaged or missing, others can reconstruct it. The drift score metric (starting ~0.8, converging to ~0.0) measures how far the octad is from perfect consistency. **Caveat:** NER and embedding quality depend on external models; this is not a pure reconstruction tool but leverages ML for inference hints.
+*Evidence:* The design document in the README details the octad modality set: Document text (natural language), Graph edges (semantic relationships), Vector embeddings (latent space), Temporal history (version chains), Provenance metadata (hash chains), Spatial coordinates (geospatial data), Semantic types (formal schema), Tensor data (numerical arrays). The planned cross-modal inference transformations are: document text → graph edges via NER, document text → vector embedding via encoding, graph edges → semantic annotations via type inference, provenance → temporal ordering via hash-chain sequencing, spatial coords → graph proximity via spatial join, tensor data → vector projections via dimensionality reduction. When any modality is damaged or missing, others can reconstruct it. Drift is an observable, not the convergence measure: the measure is the pair (missing modalities, unresolved conflicts), which is what actually decreases. **Caveat:** none of these transformations exist in this repository yet; VeriSimDB ships only deterministic baselines (Graph→Document relation text, Document→Vector feature hashing). NER and real embeddings depend on external models.
 
 == Technology Choices
 
@@ -48,20 +48,15 @@ Part of the -iser ecosystem for domain-specific query and recovery tools (TypedQ
 |===
 | Path | What's There
 
-| `src/main.rs` | CLI entry point and orchestration
-| `src/ingest/` | Ingest engine: accepts damaged databases, fragments, SQL dumps, JSON/CSV, corrupted binary files, partial WAL logs
-| `src/engine/` | Core reconstruction engine: 5-phase constraint propagation
-| `src/engine/inference.rs` | Cross-modal inference: document→graph, document→vector, graph→semantic, provenance→temporal, etc.
-| `src/engine/conflict_resolution.rs` | Conflict resolution: provenance + temporal + semantic arbitration
-| `src/engine/type_tightening.rs` | Type tightening: VCL-total levels 4-6 enforcement
-| `src/engine/convergence.rs` | Convergence: VCL-total levels 7-10 formal verification
-| `src/abi/` | Idris2 type kernel with formal proofs of monotonicity, determinism, soundness
-| `src/abi/constraints.idr` | Constraint propagation proofs
-| `src/abi/identity.idr` | Cross-modal entity identity preservation proofs
-| `src/abi/ratchet.idr` | Type ratchet soundness (data only gets more consistent)
-| `ffi/zig/src/` | C-ABI FFI bridge to Idris2 kernel (hyperpolymath standard)
-| `src/verisim_adapter.rs` | Integration with VeriSimDB octad model
-| `src/vcl_ut_adapter.rs` | Integration with VCL-total progressive type system
+| `src/main.rs` | CLI entry point; consumes the library crate
+| `src/lib.rs` | Library crate root: `abi`, `engine`, `ingest`, `manifest`, `verisim`
+| `src/ingest/mod.rs` | Ingest: format detection and octad working-directory layout (stub: no per-format handlers yet)
+| `src/engine/mod.rs` | 5-phase loop skeleton and status/confidence/review/export entry points (stub: no fixpoint, no measure)
+| `src/abi/mod.rs` | The five invariants, restated honestly; no proofs yet
+| `src/verisim.rs` | VeriSimDB HTTP client (currently targets routes `verisim-api` does not expose; re-targeting is Phase 1 work)
+| `src/interface/ffi/` | Deliberately empty: the unbuilt Zig template was deleted on 2026-11-05; an Idris2 ABI must exist first
+| `tests/` | 23 tests (unit, proptest, e2e) against the stubs
+| `docs/ROUTE-PLAN.adoc` | Architecture options, what else must be created across the estate, the proof ladder, the engineering session plan
 | `README.adoc` | Full architecture, design rationale, naming options
 |===
 

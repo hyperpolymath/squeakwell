@@ -2,10 +2,17 @@
 
 === Current State
 
-* *LOC*: ~3,470
-* *Languages*: Rust, Idris2, Zig
-* *Existing ABI proofs*: `+src/interface/abi/*.idr+` (template-level)
-* *Dangerous patterns*: None detected
+* *LOC*: ~640 Rust (2026-11-05)
+* *Languages*: Rust; an unbuilt Zig FFI template; no Idris2 source yet
+* *Existing proofs*: none. No `.idr` file exists (the template ABI was removed
+  on 2026-03-29, see below). No proof ledger exists yet; one is required by
+  README-EXPLAINME-STANDARD section 5 before any proof is claimed.
+* *Prover homes per standards PROOF-POLICY*: Creusot for the Rust kernel
+  behaviour, Idris2 for the program/journal/gate wire contracts, Agda (echo-types)
+  as theory source rechecked in Rocq (verisimdb/formal) and Lean (tropical-types).
+  The rung-by-rung ladder is `docs/ROUTE-PLAN.adoc` section 6.
+* *Dangerous patterns*: fail-open `.ok()` on every VeriSimDB call in
+  `src/engine/mod.rs` (hides the wrong-route bug); to be removed
 
 === What Needs Proving
 
@@ -33,7 +40,10 @@ insufficient
 
 === Recommended Prover
 
-* *Idris2* for recovery correctness invariants
+* *Creusot* for the Rust resolve/fill/measure kernel (behavioural properties of
+  first-party Rust), *Idris2* for the wire contracts, *Agda → Rocq/Lean* for the
+  lattice and convergence theory. The README's earlier framing of Idris2 as the
+  home of "recovery correctness invariants" is superseded by PROOF-POLICY.
 
 === Priority
 

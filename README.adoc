@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
-= Octad-Recover (working title — see naming section below)
+= squeakwell — database recovery through cross-modal constraint propagation
 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 :toc: left
 :toclevels: 3
@@ -63,7 +63,8 @@ Damaged data (fragments, corruption, inconsistencies)
         ▼
   PHASE 5 — CONVERGENCE (VCL-total Levels 7-10)
   Cardinality bounds, effect tracking, temporal consistency, linearity.
-  Data that passes all 10 levels is formally verified as recovered.
+  The reintroduction statements for an entity are gate-admissible at level k
+  (ceiling 6 from VCL text; see docs/ROUTE-PLAN.adoc section 4.4).
   Drift score: approaches 0.0
         │
         ▼
@@ -118,13 +119,14 @@ function: recovery is complete when cross-modal drift approaches zero.
   - Phase 4: Type tightening (VCL-total levels 4-6)
   - Phase 5: Convergence (VCL-total levels 7-10)
 
-* **Idris2 type kernel** (`src/abi/`) — Formal proofs that:
+* **Invariants** (`src/abi/mod.rs`; no proofs exist yet, prover homes per
+  estate PROOF-POLICY are in `docs/ROUTE-PLAN.adoc`) — the engine is designed so that:
   - Constraint propagation is monotonic (data only gets more consistent)
   - Cross-modal inference preserves entity identity
   - Conflict resolution is deterministic (same input → same output)
   - Type ratchet is sound (passing level N implies passing levels 1..N-1)
 
-* **VCL-total integration** — Uses TypedQLiser as the type-checking layer.
+* **VCL-UT integration** — Uses the `vclt-gate` binary (hyperpolymath/vcl-ut) as the certifier.
   Each phase invokes progressively stricter VCL-total levels.
 
 * **Output** — Reconstructed database in VeriSimDB format (all 8 modalities
@@ -233,7 +235,12 @@ function: recovery is complete when cross-modal drift approaches zero.
 
 == Status
 
-**Concept stage.** Architecture sketched, phases defined, naming under discussion.
+**Concept stage (2026-11-05).** Architecture sketched, phases defined, engine and
+client are stubs, no proofs exist yet. The route to a working recovery and to the
+first mechanised results, the decisions still open, and what must be created in
+verisimdb, vcl-ut, echo-types and tropical-types are in `docs/ROUTE-PLAN.adoc`.
+The crate, repository and clade are named `squeakwell`; the naming table above
+is kept as the record of the alternatives.
 
 == License
 
