@@ -3,30 +3,50 @@
 :toc:
 :icons: font
 
+squeakwell is a database recovery tool: fragments are scattered across
+VeriSimDB's eight modalities, which then act as witnesses that reconstruct
+and cross-check each other until the entity converges. VeriSimDB is the
+required underlying database. The detailed route (architecture options,
+proof ladder, session plan, decisions) is `docs/ROUTE-PLAN.adoc`.
+
 == Phase 0: Scaffold (COMPLETE)
 * [x] RSR template with full CI/CD
-* [x] CLI with subcommands
-* [x] Manifest parser
-* [x] Codegen stubs
-* [x] ABI module stubs
-* [x] README with architecture
+* [x] CLI with subcommands (`ingest`, `recover`, `status`, `confidence`,
+  `review`, `export`, `explain`)
+* [x] Stub engine, stub ingest, VeriSimDB client skeleton
+* [x] 23 tests against the stubs
 
-== Phase 1: Core Implementation
-* [ ] Implement target-language-specific code generation
-* [ ] Write Idris2 ABI proofs for core invariants
-* [ ] Build Zig FFI bridge
-* [ ] First working end-to-end example
-* [ ] Integration tests
+== Phase 1: Honest baseline (IN PROGRESS)
+* [x] Binary builds again (uses the library crate)
+* [x] K9 / DEED manifests validate; template placeholders removed from
+  the FFI and container files
+* [x] Invariants restated in `src/abi/mod.rs` in a mechanisable form
+* [ ] VeriSimDB client re-targeted to the real `verisim-api` routes
+* [ ] Hypatia critical findings on CI workflows cleared
 
-== Phase 2: Polish
-* [ ] Error messages and diagnostics
-* [ ] Shell completions (bash, zsh, fish)
-* [ ] CI/CD for the generated artifacts
-* [ ] Performance benchmarks
-* [ ] Additional examples
+== Phase 2: Engine MVP (the ultracode engineering session)
+* [ ] Partial-octad model in-process (verisim-octad types)
+* [ ] Guarded fill + resolve fixpoint loop with the lexicographic measure
+* [ ] Deterministic baseline regenerators (Graph<->Document, Document->Vector)
+* [ ] Review queue = non-singleton fibres; export refuses unreviewed ambiguity
+* [ ] VCL-UT grading of each entity's canonical DECLARE / NORMALISE
+  transition (L0–L6 cap disclosed)
+* [ ] First end-to-end recovery of a golden damaged CSV+JSON dataset
+* [ ] Export to a running VeriSimDB with a provenance chain per entity
 
-== Phase 3: Ecosystem
-* [ ] PanLL panel integration
-* [ ] BoJ-server cartridge
-* [ ] VeriSimDB backing store for results
-* [ ] Publish to crates.io
+== Phase 3: Proofs (the theory ladder)
+* [ ] `verisimdb/formal/Recovery.v`: guarded fill, lexicographic progress,
+  termination, identity preservation
+* [ ] echo-types module: join-semilattice of partial sections (also closes
+  the gap CROSS-REPO-MAP already flags for merge R1–R3)
+* [ ] Idris2 ABI (`src/interface/abi/Recovery.idr`) quoting the Rocq
+  statements as the contract
+* [ ] tropical-types instance: bottleneck confidence for inference chains
+* [ ] Creusot annotations on the Rust resolve kernel
+
+== Phase 4: Ecosystem
+* [ ] vcl-ut: RECOVER justification / confidence-carrying
+  `RepairJustification`
+* [ ] verisimdb: regenerate-and-return, octad-aware drift as a library,
+  client-chosen ids, proof-certificate attachment
+* [ ] PanLL panel, BoJ-server cartridge, crates.io release

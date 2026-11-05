@@ -1,57 +1,69 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
 == TEST-NEEDS: squeakwell
 
-=== CRG Grade: C — ACHIEVED 2026-04-04
+=== Current State (2026-11-04)
 
-=== Current State
-
-[width="100%",cols="40%,26%,34%",options="header",]
+[width="100%",cols="40%,16%,44%",options="header",]
 |===
 |Category |Count |Details
-|*Source modules* |12 |Rust (main, lib, manifest/mod, engine/mod,
-ingest/mod, abi/mod) + Idris2 ABI (3) + Zig FFI (3)
-
-|*Unit tests* |0 |Zero. No #[test] in any source file
-
-|*Integration tests* |0 |None
-
-|*E2E tests* |0 |None
-
-|*Benchmarks* |0 |None
-
-|*Fuzz tests* |0 |placeholder.txt only
+|*Source modules* |6 Rust |`main`, `lib`, `engine`, `ingest`, `manifest`, `abi` (comment-only), `verisim`
+|*Unit tests* |10 |`tests/unit_test.rs` — ingest format detection, workdir layout, stub engine entry points
+|*Property tests* |5 |`tests/property_test.rs` (proptest) — ingest determinism, octad directory completeness, stub recovery terminates, level monotonic, query functions stable
+|*E2E tests* |8 |`tests/e2e_test.rs` — CLI subcommands against the stub engine
+|*Benchmarks* |3 |`benches/squeakwell_bench.rs` (criterion) — measure stub dispatch only
+|*Fuzz tests* |0 |`tests/fuzz/` holds a placeholder, no harness
+|*Idris2 / Zig tests* |0 |No `.idr` files exist; Zig FFI is an unbuilt template
 |===
 
-=== What’s Missing
+All 23 tests pass (`cargo test`), but every one exercises a stub: the
+engine runs a 5-phase loop that prints phase names and persists
+placeholder drift values. Green here means "the scaffold is wired", not
+"recovery works".
 
-==== EVERYTHING (CRITICAL)
+=== What's Missing
 
-* [ ] Zero tests of any kind for 6 Rust modules
-* [ ] No test for manifest parsing
-* [ ] No test for engine processing
-* [ ] No test for ingest pipeline
-* [ ] No test for ABI layer
+==== Engine (CRITICAL — blocks everything else)
+
+* [ ] Fixpoint loop over partial octads (guarded fill, resolve, measure);
+  `max_iterations` is parsed but never used
+* [ ] Lexicographic measure `(|missing|, nconflicts)` and a test that it
+  strictly decreases or the state is a fixpoint (the Progress invariant in
+  `src/abi/mod.rs`)
+* [ ] Proptest laws for `resolve`: commutative, associative, idempotent,
+  permutation-invariant (the join-semilattice conditions that make
+  verisimdb `Octad.v` merge theorems apply)
+* [ ] Golden damaged-dataset fixtures (CSV + JSON fragments with deleted
+  and contradicted fields) with expected review-queue contents
+
+==== VeriSimDB integration
+
+* [ ] Client targets real `verisim-api` routes (`POST /octads`,
+  `PUT /octads/{id}`, `/normalizer/trigger/{id}`, `/drift/entity/{id}`);
+  today it PUTs to `/v1/<collection>/<id>`, which does not exist
+* [ ] Integration test against a running `verisim-api` (podman), gated
+  behind a feature or env var
+
+==== VCL-UT integration
+
+* [ ] Grade recovered entities through `vclt-gate` (or link
+  `vcltotal-parse`) and assert the L0–L6 cap is reported, never faked
 
 ==== Aspect Tests
 
-* [ ] *Security*: Audio/sound processing tool with zero security tests
-* [ ] *Performance*: No benchmarks for audio processing throughput
-* [ ] *Concurrency*: No tests for concurrent audio stream handling
-* [ ] *Error handling*: No tests for malformed audio input, codec
-failures
-
-==== Benchmarks Needed
-
-* [ ] Audio processing latency
-* [ ] Ingest throughput
-* [ ] Memory usage under load
+* [ ] *Security*: ingest of hostile dumps (path traversal in fragment
+  names, oversized rows, malformed UTF-8)
+* [ ] *Integrity*: export never emits an entity absent from the review
+  queue whose fibre is non-singleton
+* [ ] *Performance*: convergence iterations vs. number of fragments
+  (bench), ingest throughput
+* [ ] *Observability*: phase events carry real drift and measure values
 
 ==== Self-Tests
 
-* [ ] No self-diagnostic mode
-
-=== FLAGGED ISSUES
-
-* *12 source files, 0 tests* – completely untested
-* *fuzz/placeholder.txt* – fake fuzz testing claim
+* [ ] `squeakwell doctor` self-diagnostic (verisim reachability, gate
+  binary present, workdir sanity)
 
 === Priority: P0 (CRITICAL)
+
+See `docs/ROUTE-PLAN.adoc` for the empirical experiments that gate the
+engineering work.

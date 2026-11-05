@@ -5,33 +5,40 @@
 [metadata]
 project = "squeakwell"
 version = "0.1.0"
-last-updated = "2026-03-20"
+last-updated = "2026-11-04"
 status = "active"
-session = "converted from scheme — 2026-04-11"
+session = "route plan + honest baseline — 2026-11-04"
 
 [project-context]
 name = "Squeakwell"
 purpose = """Database recovery through cross-modal constraint propagation"""
-completion-percentage = 5
+completion-percentage = 8
 
 [position]
-phase = "initial-scaffold"   # design | implementation | testing | maintenance | archived
+phase = "design"   # design | implementation | testing | maintenance | archived
 maturity = "experimental"  # experimental | alpha | beta | production | lts
 
 [route-to-mvp]
 milestones = [
-  # No milestones recorded
+  "M1 honest baseline: binary builds, manifests validate, invariants restated (2026-11-04)",
+  "M2 engine MVP: fixpoint loop over partial octads, golden dataset recovered, export to VeriSimDB",
+  "M3 proofs: verisimdb formal/Recovery.v + echo-types partial-section join module + Idris2 ABI contract",
 ]
 
 [blockers-and-issues]
 issues = [
-  "Project is in scaffold phase — no blockers yet",
+  "Engine, ingest and VeriSimDB client are stubs; no Idris2 proofs exist",
+  "VeriSimDB client targets /v1/<collection>/<id>, which verisim-api does not expose",
+  "VCL-UT certifies only L0-L6 from source (vcl-ut #25); phases 4-5 capped at L6",
+  "verisim-api keeps octad-aware drift and real regenerators private to the binary crate",
 ]
 
 [critical-next-actions]
 actions = [
-  "Implement codegen for primary use case",
-  "Write first working example end-to-end",
+  "Owner decisions in docs/ROUTE-PLAN.adoc section 11 (coupling arm, prover home, VCL-UT extension scope, name)",
+  "Run the empirical gate E1-E6 before the engine session",
+  "Re-target src/verisim.rs to real verisim-api routes",
+  "File the cross-repo issues listed in docs/ROUTE-PLAN.adoc section 12",
 ]
 
 [maintenance-status]

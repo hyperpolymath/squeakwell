@@ -1,4 +1,4 @@
-// {{PROJECT}} FFI Build Configuration
+// squeakwell FFI Build Configuration
 // SPDX-License-Identifier: MPL-2.0
 
 const std = @import("std");
@@ -9,7 +9,7 @@ pub fn build(b: *std.Build) void {
 
     // Shared library (.so, .dylib, .dll)
     const lib = b.addSharedLibrary(.{
-        .name = "{{project}}",
+        .name = "squeakwell",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) void {
 
     // Static library (.a)
     const lib_static = b.addStaticLibrary(.{
-        .name = "{{project}}",
+        .name = "squeakwell",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
@@ -32,8 +32,8 @@ pub fn build(b: *std.Build) void {
 
     // Generate header file for C compatibility
     const header = b.addInstallHeader(
-        b.path("include/{{project}}.h"),
-        "{{project}}.h",
+        b.path("include/squeakwell.h"),
+        "squeakwell.h",
     );
     b.getInstallStep().dependOn(&header.step);
 
@@ -79,7 +79,7 @@ pub fn build(b: *std.Build) void {
 
     // Benchmark (if needed)
     const bench = b.addExecutable(.{
-        .name = "{{project}}-bench",
+        .name = "squeakwell-bench",
         .root_source_file = b.path("bench/bench.zig"),
         .target = target,
         .optimize = .ReleaseFast,

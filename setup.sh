@@ -165,7 +165,7 @@ install_just_release() (
     trap 'rm -rf "$just_tmp"' 0
     trap 'exit 1' 1 2 3 15
     just_archive="$just_tmp/just.$just_extension"
-    curl -fsSL "https://github.com/casey/just/releases/download/$just_version/just-$just_version-$just_target.$just_extension" \
+    curl --proto "=https" --tlsv1.2 -fsSL "https://github.com/casey/just/releases/download/$just_version/just-$just_version-$just_target.$just_extension" \
         -o "$just_archive" || exit 1
 
     if command -v sha256sum >/dev/null 2>&1; then
