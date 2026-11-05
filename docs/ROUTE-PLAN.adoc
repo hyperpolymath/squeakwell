@@ -1,0 +1,931 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= squeakwell Route Plan: proof pathways and the engineering route onto VeriSimDB
+:toc: left
+:toclevels: 3
+:icons: font
+:revdate: 2026-11-05
+
+[.lead]
+squeakwell recovers damaged datasets by scattering fragments across VeriSimDB's
+eight modalities and letting them cross-check and reconstruct each other.
+VeriSimDB is the required underlying database. This document answers four
+questions: what is the fastest route down the proof pathways, what is the
+fastest engineering route, what else has to be created across the estate, and
+how an ultracode engineering session should be run. It replaces the aspirational
+wording in `README.adoc` where the two disagree.
+
+== 0. Provenance of this plan
+
+What this plan rests on, so nothing here is taken for more than it is:
+
+* Six reader agents read squeakwell, verisimdb (Rust crates and `formal/*.v`),
+  vcl-ut, echo-types, tropical-types and the estate `standards`/mathesis policy,
+  citing file and line. Four design agents each produced a full architecture.
+  Three judges scored them under the elegance, dependability/privacy and
+  speed/testability lenses. Fourteen adversarial refuters attacked the proposed
+  theorem ladder; twelve claims were refuted *as packaged* and repaired, two
+  survived. The repaired statements are the ones recorded here.
+* Verified by running: `cargo check -p verisim-octad -p verisim-drift
+  -p verisim-normalizer` succeeds (165 crate units, about 37 s warm cache);
+  `vcltotal-parse` builds standalone (2 s); the `vclt-gate` binary certifies
+  `DECLARE … WHERE … = $1 LIMIT 1` at level 6 and `NORMALISE 'e' FROM
+  AUTHORITATIVE DOCUMENT` at level 4, rejects `EFFECTS { Write }` at L0, and
+  spawns in about 3 ms; squeakwell builds and passes its 23 tests.
+* Not verified by running: no Rocq/Coq, Agda, Lean, Idris2, Creusot, Isabelle or
+  podman is installed in the planning environment. Every statement about a
+  proof is from reading the source. Per `standards/3-practice/PROOF-POLICY.adoc`
+  section 5, every proof row for squeakwell is therefore OPEN until a prover
+  actually runs.
+
+== 1. The answer in one page
+
+**Engineering route (fastest honest path to a working recovery).**
+Build squeakwell as a *compiler from fragments to a certified VCL transition
+program*, with a *local-first pure kernel* in front of it. Fragments are typed
+and classified in-process (guarded fill, pure resolve, the lexicographic
+measure), contradictions are held locally, and only agreed values are lowered
+to a running `verisim-api` over its real routes. Every round is printed as a
+canonical `.vcl` script, every statement is certified by the `vclt-gate` binary
+before it is executed, every executed line becomes a provenance record on the
+entity's hash chain, and the loop re-synthesises from the server's own drift
+report until the program is empty. This is Architecture D with Architecture A's
+kernel grafted in (section 4). Two of three judges chose D; the third chose B
+and its grafts are the upstream asks in section 5. The MVP needs **no change in
+verisimdb or vcl-ut**; everything on its critical path exists today.
+
+**Proof pathway (fastest honest path to a first mechanised result).**
+Do not try to prove the README's five invariants: one is false (drift is not
+monotone under fill), two are vacuous as written (determinism as reflexivity,
+termination as "or `max_iterations`"), one belongs to vcl-ut (the ratchet) and
+one conflates a provable identity fact with an unprovable oracle claim. Prove
+the repaired statements in section 3 in this order:
+
+. **Rung 0 (today, Rust)**: property tests for the resolve-kernel laws, guarded
+  fill, and the lexicographic measure, with the mandatory counter-model test
+  that *finds* a case where conflicts rise after fill.
+. **Rung 1 (hours, Rocq)**: `verisimdb/formal/Recovery.v`: guarded fill,
+  normalise, identity preservation, the counter-model to drift monotonicity,
+  and lexicographic progress with the hypotheses the refuters showed are
+  needed (`conflict_sym`, winner-relative conflict count).
+. **Rung 2 (one to two sessions, Agda)**: `echo-types/proofs/agda/EchoPartialSection.agda`,
+  the join-semilattice of partial sections that `verisimdb/formal/CROSS-REPO-MAP.adoc`
+  already flags as the one missing abstraction. The Rocq file then becomes an
+  instantiation, as the owner's standing directive requires.
+. **Rung 3 (hours each, Lean)**: the two small tropical-types lemmas that
+  survived refutation: the free-monoid residue measure and the reachability
+  grade with its monotonicity facts.
+. **Rung 4 (after the kernel exists, Creusot)**: purity and permutation
+  invariance of the Rust resolve kernel, and the export postcondition.
+. **Rung 5 (after the wire format is stable, Idris2)**: the engineering
+  contract for the program IR, journal and gate request/response.
+
+**What else must be created**: section 5 lists it per repository. The largest
+single item is the echo-types module; the most valuable upstream ask is a
+`propose`/`apply` pair on verisimdb's normalizer that carries a
+`RepairJustification`, because today the server picks the repair target itself.
+
+**Decisions only the owner can take**: section 9. The default arm is labelled
+in each.
+
+== 2. Ground truth, per repository
+
+=== 2.1 squeakwell (this repository)
+
+[cols="2,5"]
+|===
+| Item | State on 2026-11-05
+
+| Rust | About 640 lines; `main` consumes the library crate; `engine` is a
+  print-only five-phase loop (no fixpoint, `max_iterations` parsed and unused,
+  drift hard-coded to 1.0 in phase events); `ingest` creates eight directories;
+  `manifest` is three comment lines; `abi` is comments only.
+| VeriSimDB client | `src/verisim.rs` PUTs to `/v1/<collection>/<id>`, a route
+  `verisim-api` does not have. Every call is swallowed with `.ok()`, so the
+  wrong routes never surfaced in tests.
+| Tests | 23 pass (8 e2e, 5 property-style with hand-rolled cases, 10 unit),
+  all against the stubs. No proptest crate. Benches exercise stubs.
+| Proofs | None. No `.idr` file exists; the template ABI was removed on
+  2026-03-29. `PROOF-NEEDS.adoc` still claims template-level proofs and about
+  3,470 lines of code; both are wrong and are corrected on this branch.
+| Templates | About 60 unrendered `{{…}}` placeholders remain outside the FFI
+  directory (root `Containerfile`, `.envrc`, `.github/*`, `docs/developer/ABI-FFI-README.adoc`,
+  quickstarts, `www/.well-known`). `build.zig` references an include file and a
+  bench that do not exist.
+| CI | Dogfood Gate K9 check failed on `container/deploy.k9.ncl` (fixed on this
+  branch). Static Analysis Gate is green on `main` since the descriptile move.
+  SonarCloud flagged one new vulnerability (curl without `--proto`) on PR 76;
+  fixed on this branch.
+|===
+
+=== 2.2 verisimdb (the required substrate)
+
+[cols="2,5"]
+|===
+| Item | Finding (file and line as read)
+
+| Partial octads | First-class. `Octad` has `Option` for graph, vector, tensor,
+  semantic, document and spatial, and `u64` counters for temporal and
+  provenance (`verisim-octad/src/lib.rs` 282-305); `OctadInput` is all-Option.
+  `OctadConfig.require_complete` is never read anywhere.
+| Drift as a library | `verisim-drift` scores raw parts, never an `Octad`, and
+  returns `0.0` for empty inputs (`calculator.rs` 42-44 and siblings): **absence
+  reads as zero drift**. The honest octad-aware layer with `computable:false`
+  per absent modality lives only in `verisim-api/src/drift_compute.rs`, private
+  to the binary, reachable through `GET /drift/entity/{id}`.
+| Regeneration | `RegenerationEngine::regenerate` returns a summary string; the
+  default `SummaryRegenerator` reports repaired with drift 0.0 while mutating
+  nothing (`regeneration.rs` 536-544). Real regenerators are in
+  `verisim-api/src/regenerator.rs`: Graph→Document (appends a `Relations:`
+  section), Document→Vector (FNV-1a feature hashing, deterministic, not
+  semantic), Document/Vector→Tensor. No Document→Graph, no merge.
+| Conflict resolution | `ConflictResolver::resolve` is stateful, keyed by
+  conflict id, returns a winning modality name, never a merged value.
+  `LastWriterWins` takes the caller's last list element (`conflict.rs` 688-692,
+  confirmed by its own test); `resolved_at = Utc::now()`; `AutoMerge` returns
+  `None` despite its documentation.
+| API | `POST /octads` always generates a UUID (no client id, no upsert);
+  `PUT /octads/{id}` 404s when missing and under-reports presence in its
+  response; `OctadResponse` carries flags and counts, not content;
+  `POST /normalizer/trigger/{id}` picks the repair target itself;
+  `/proofs/generate` is a SHA-256 commitment or Merkle inclusion, explicitly not
+  zero-knowledge, with no entity linkage; `/vcl/execute` dispatches only
+  SELECT, SEARCH, INSERT, DELETE, SHOW, COUNT, EXPLAIN (`vcl.rs` 97-103). The
+  lifecycle verbs are the semantic model, not the in-repo grammar.
+| Defaults | Auth disabled (`auth.rs` 40-47), bind on all interfaces, in-memory
+  store unless the persistent feature is built.
+| `formal/Octad.v` | octad = ident × (modality → option mval); `project`
+  idempotent and composes as meet; `merge resolve` commutative, associative and
+  idempotent iff `resolve` is; `enrich` **overwrites** an existing value; all
+  `*_preserves_id` are reflexivity.
+| `formal/Normalizer.v` | `modality` and `octad` are abstract Parameters,
+  incompatible with `Octad.v`'s inductive record; `drifted` is a global
+  constant; `normalize_idempotent` holds under two winner axioms. N1
+  (drift decrease) is explicitly deferred in the file.
+| `formal/Drift.v` | Scores are clamped to [0,1]; `le` has reflexivity only
+  (no transitivity, no well-foundedness). No `drift(octad)` exists anywhere in
+  `formal/`.
+| Cross-repo map | Every foundation theorem is mapped to an echo-types module;
+  the one flagged missing abstraction is the join-semilattice of partial
+  sections.
+|===
+
+=== 2.3 vcl-ut (the certifier)
+
+* Every level L0–L10 is a predicate over a `Statement` (plus `OctadSchema`) or
+  a `Transition`; none mentions a value or an octad. "Data that passes level N"
+  is a category error. The honest claim is: *the reintroduction statement for
+  entity e is gate-admissible at level k, and e's populated fields are
+  schema-bound.*
+* From VCL text only L0–L6 are reachable (issue #25, fail-closed). Transitions
+  have a hard ceiling of 4 (`Transition.idr` 183-185) and do not check modality
+  presence: `NORMALISE e FROM AUTHORITATIVE TENSOR` on a tensor-less entity is
+  admissible. Exit 0 is not "repair justified".
+* The `vclt-gate` binary is the frozen v1 seam; verisimdb's Elixir executor
+  already calls it. Linking `vcltotal-parse` as a crate bypasses the trusted
+  seam (its Rust decider carries no proofs). Use the binary; use the crate only
+  as a test oracle.
+* `Epistemic.idr` line 149 discards the atom in `satisfies (PAtom _)`, and
+  `PBelieves` evaluates identically to `PKnows`; no module imports the Kripke
+  semantics. Any L10 story built on it today is vacuous.
+
+=== 2.4 echo-types and tropical-types (the owner's types)
+
+* echo-types: `Echo f y := Σ x. f x ≡ y` and the finite fibre-count,
+  decidability and no-section lemmas are mechanised, `--safe --without-K`, zero
+  postulates. Missing: any partial-section or multi-witness layer.
+  `EchoTruncation.agda` is unwired from `All.agda` and so counts as dead code
+  under the repo's own discipline. Retracted and gated: the graded comonad,
+  the cone universal property, any 2-categorical shape, EI-2 (gate G-001).
+  Hard limit the theory itself states: any fibre-determined functional is
+  witness-blind, so a confidence score may rank fibres but never choose a
+  member of one.
+* tropical-types: `Resource.Closure` defines the Kleene star `matStar`
+  parametrically over any `ResourceAlgebra` with monotonicity, `I ⊑ A*` and a
+  bound certificate, instantiated at `MinMax` (bottleneck) and `MinPlus`
+  (product on quantised −log confidence). It proves **no walk semantics**;
+  that exists only in Isabelle, over naturals, for max-plus and min-plus, and
+  the Isabelle status is self-contradictory inside the repo. Carriers are
+  ℕ-based: a quantisation layer is needed for f64 confidence.
+  `hub_ceiling` is over `List TransportClass` and does not transfer literally.
+
+=== 2.5 Estate policy (standards @ e064539, mathesis)
+
+First-party Rust behaviour is verified with Creusot, never a parallel model.
+Idris2 carries API, ABI and wire-format contracts. Theory lives in Agda as
+source of truth, rechecked in Rocq and Lean. Existing Rocq proofs of theory are
+target-only evidence until an Agda source exists and the statements are
+compared. Status vocabulary: PROVEN, PROVEN-WITH-AXIOMS, TESTED (with bounds),
+ASSUMED, OPEN; a row is only as strong as its weakest dependency. Python is
+banned with no exceptions, which rules out any ML regenerator the README
+alludes to. squeakwell has no row in the mathesis catalogue because it has no
+proof files of its own.
+
+== 3. The invariants, restated honestly
+
+[cols="1,2,3,2"]
+|===
+| Invariant (README) | Verdict | Repaired statement | Home
+
+| MonotonicConvergence
+  `drift(i+1) ≤ drift(i)`
+| **False.** Runnable witness: a Document-only octad reports
+  `graph_document_drift {0.0, computable:false}`; add one graph edge whose
+  target is not in the text and it becomes `{0.5, computable:true}`.
+| Progress on a lexicographic measure `mu(o) = (|missing o|, nconflicts o)`
+  over naturals: `step o = o ∨ mu(step o) <lex mu(o)`, with `step = normalise ∘
+  fill`, guarded fill (None→Some only), normalise copying the winner and never
+  un-filling, hypotheses `conflict_refl`, `conflict_sym`, `winner_present`,
+  `winner_stable`, and `nconflicts` counted relative to the winner. Fixpoint in
+  at most 9 steps. Drift is an observable, related only by a bridge lemma
+  (`nconflicts = 0 → every computable pairwise drift = 0`).
+| Rocq `formal/Recovery.v` (recheck leg); Agda `EchoPartialSection` (source).
+
+| IdentityPreservation
+  `infer(e,m1) consistent_with observe(e,m2)`
+| **Split.** The identity half is a three-line induction over the existing
+  `*_preserves_id` lemmas. The consistency half is not a theorem: it contradicts
+  the existence of Phase 3 and depends on oracles.
+| `oid (iter step n o) = oid o`, with fill defined as `merge (fun a _ => a) o
+  (mk_octad (oid o) (oracle o))` so the observed value wins, and all oracles
+  passed as arguments, never declared as Parameters. Plus: guarded fill never
+  changes an observed value on the six content modalities; the two audit
+  modalities (provenance, temporal) move by chain prefix, not by equality.
+| Rocq `formal/Recovery.v`.
+
+| DeterministicResolution
+  `resolve(c,I) = resolve(c,I)`
+| **Vacuous** (reflexivity). The Rust is order-dependent: LWW takes the
+  caller's last element; `ModalityPriority` falls back to `.first()` for
+  modalities not in the list.
+| A pure Rust kernel `resolve(policy, &[(Modality, Ts, Mval)]) -> Option<Modality>`
+  with `#[ensures(result == spec_resolve(policy, xs@))]`, body free of clock,
+  RNG and statics; `ModalityPriority` permutation-invariant given a total order
+  on `Modality` as tie-break; `LastWriter` permutation-invariant only with
+  timestamps carried in the input and a total tie-break; equality on
+  observable fields only.
+| Creusot on `src/engine/resolve.rs` (squeakwell).
+
+| TypeRatchetSoundness
+  `passes(e,n) → ∀ m ≤ n. passes(e,m)`
+| **Belongs to vcl-ut**, and is Statement-indexed, not data-indexed. Holds by
+  constructor shape; the projection function is unwritten. Transitions have no
+  level index at all (`certifiedTransitionLevel` is the constant 4).
+| `weaken : SafetyCertificate s sch n -> CanWeakenStar n m -> SafetyCertificate
+  s sch m` (about 23 clauses). squeakwell's `passes(e, k)` is defined as: the
+  canonical reintroduction statements for e certify at level ≥ k; capped at 6
+  from text, 4 for transitions.
+| Idris2 `vcl-ut/src/core/Levels.idr`; quoted contract in squeakwell's ABI.
+
+| TerminationGuarantee
+  `∃ i. drift < θ ∨ i = max_iterations`
+| **Vacuous** (satisfied by `i := max_iterations`); no loop exists.
+| Well-foundedness of `mu` on nat×nat gives termination without fuel;
+  `max_iterations` is an operational budget and a `NotConverged` error, not the
+  argument.
+| Same file as Progress.
+
+| "Never export corrupt data" (PROOF-NEEDS)
+| Not statable over `project M` (normalise legitimately overwrites a drifted
+  observed value, so the repaired octad leaves that fibre).
+| At fragment granularity: let `T ⊆ dom(obs)` be the fragments Phase 3 accepts
+  as authoritative (an output of recovery, recorded in provenance; every
+  overruled fragment carries a `RepairJustification`). Every exported octad e
+  satisfies `restrict_T e = obs|_T`, i.e. `e : Echo restrict_T (obs|_T)`.
+  Review-queue completeness is stated over the *enumerated candidate fibre*
+  (`FiberSize-fin (obs ∘ cand_y) y`), not over the mask fibre, and needs a
+  concrete `mval` with decidable equality.
+| Agda `EchoRecovery` audience record (source); Creusot export postcondition.
+|===
+
+== 4. Architecture
+
+=== 4.1 The four options as judged
+
+Scores are 1–10 from the three judges (elegance E, dependability/privacy D,
+speed-to-first-recovery S). All four honour the hard requirement that
+VeriSimDB is the underlying database.
+
+[cols="2,1,1,1,4"]
+|===
+| Option | E | D | S | Decisive finding
+
+| A. Library-coupled: verisim crates in-process, server at export
+| 7/7/6 | 6/7/7 | 5/5/5
+| Best offline testability and data minimisation; but re-implements two
+  private server semantics (computability flags, hash embedding) with no
+  compile-time tie, and `verisim-normalizer` pulls `verisim-octad` and all
+  eight modality crates, so the "light" fallback does not exist.
+
+| B. Server-driven: every fragment is an octad in verisim-api
+| 8/7/8 | 7/5/8 | 4/4/3
+| Cleanest separation and the strongest form of the requirement; but the MVP
+  is blocked on six upstream route additions, has zero offline test surface,
+  and writes every raw and contradictory value to an unauthenticated,
+  all-interfaces server before any review.
+
+| C. Hybrid with the session dogfooded as an octad
+| 5/6/5 | 6/5/6 | 4/4/5
+| The `verify` subcommand and the fibre trichotomy are good; the dogfood
+  layer fills modalities with semantically void content (hash-embedding of
+  review text, an 8×8 drift tensor) and leaks the review queue to the server
+  every iteration.
+
+| D. Compiler: fragments → certified VCL program → lowered to REST
+| 7/8/7 | 7/7/8 | 5/6/8
+| Dissolves the README's category error (the certified object *is* a
+  statement), replay is a testable WAL-style property, fail-closed round abort
+  on a missing gate, values never enter statement text. Weaknesses: verisimdb
+  executes none of the lifecycle verbs, so the lowering is a second semantics
+  guarded only by replay tests; NORMALISE lowering is intent-lossy today;
+  round-0 lowers all fragments before review unless A's classification is
+  grafted in front.
+|===
+
+=== 4.2 Recommendation
+
+Per estate doctrine 15 the most elegant correct long-term option is the
+default arm, and it must be labelled: **D with A's kernel in front (default
+arm)**. Named here as *the compiler route*.
+
+* From D: the program IR and canonical printer, the gate client on the frozen
+  binary seam, the lowering with bindings and statement-hash provenance, the
+  round-based journal with `replay` and `diff`, intent/effect reconciliation,
+  round abort on `GateUnavailable`.
+* From A: local-first fragment typing, the pure resolve kernel with its law
+  tests, guarded fill, the lexicographic measure and the mandatory
+  counter-model test, `quality: Option<f64>` that is `None` when nothing is
+  computable, the constructor that refuses verisimdb's `SummaryRegenerator`,
+  the id-map written before any dependent write.
+* From C: the fibre trichotomy (size 0/1/n) as the export gate with confidence
+  as ranking only, and the `verify` subcommand that rebuilds status from the
+  id-map and the server alone.
+* From B: the upstream asks (section 5.1), filed with measured numbers from
+  the MVP run rather than argued.
+
+Why not B outright, although one judge preferred it: its MVP cannot run
+without verisimdb changes the squeakwell owner does not control, and it has no
+offline test surface, which is exactly what an ultracode session needs to
+validate within one sitting. Why not A outright: it duplicates private server
+semantics and its `--allow-offline` switch reintroduces fail-open. The compiler
+route keeps the server as the only drift authority and keeps squeakwell's own
+code to typing, synthesis, lowering and journalling.
+
+Alternatives rated for the record (elegance/correctness first, then
+dependability):
+
+. **D-only** (no local kernel, lower everything at round 0): most elegant on
+  paper, loses on privacy and on recovery power until verisimdb grows
+  `propose`/`apply`. Second.
+. **A-only**: dependable offline, slower to a first recovery, duplicates
+  semantics. Third.
+. **B**: correct end state for the server, but blocked. Fourth today, first
+  once section 5.1 lands upstream; the compiler route converges to it.
+
+=== 4.3 Components and data flow
+
+....
+ fragments (CSV, JSON, embeddings, provenance, versions)
+      │
+      ▼
+ ┌──────────────┐   typing: entity keys, OctadSchema fields, presence vectors,
+ │ src/fragments│   candidate lists per field, damage mask
+ └──────┬───────┘
+        ▼
+ ┌──────────────┐   pure kernel (A graft): guarded fill with deterministic
+ │ src/kernel   │   regenerators, resolve(policy, frags) -> winner + justification,
+ │  fill/resolve│   mu = (|missing|, nconflicts), fibre trichotomy, review queue
+ │  measure     │   (no network, proptest laws, Creusot targets)
+ └──────┬───────┘
+        ▼
+ ┌──────────────┐   round-N.vcl: DECLARE / ASSERT / NORMALISE … WHERE … = $n
+ │ src/program  │   params-N.json carries the values; canonical printer;
+ │  IR + synth  │   requested level ≤ 6 by construction
+ └──────┬───────┘
+        ▼
+ ┌──────────────┐   vclt-gate binary (pinned commit), stdin JSON, 2 s timeout,
+ │ src/gate     │   exit 0 → execute, 1 → review, 2 → abort the round
+ └──────┬───────┘   certs-N.jsonl with the gate's commit hash
+        ▼
+ ┌──────────────┐   REST plan on real routes: POST /octads, PUT /octads/{id},
+ │ src/lower    │   POST /normalizer/trigger/{id}, POST /provenance/{id}/record
+ │              │   (event keyed by SHA-256 of the statement), presence pre-check,
+ └──────┬───────┘   intent/effect reconciliation → effects-N.jsonl
+        ▼
+ ┌──────────────┐   GET /drift/entity/{id} (computable flags), GET after PUT,
+ │ verisim-api  │   GET /provenance/{id}/verify; fixed threshold, `le` boundary
+ └──────┬───────┘
+        ▼
+   re-synthesise next round until the program is empty, or NotConverged
+....
+
+Journal on disk: `session.json`, `bindings.json` (symbolic name → UUID, written
+before any dependent write), `round-N.vcl`, `params-N.json`, `certs-N.jsonl`,
+`effects-N.jsonl`, `review-N.vcl`. Everything the user will read contains ids,
+hashes, counts, levels and exit codes, never recovered values.
+
+=== 4.4 The honest grading rule
+
+For each entity e squeakwell emits one `DECLARE <mod>.<field> FROM OCTAD 'e'
+WHERE <mod>.<field> = $n LIMIT 1` per populated field and, for each repair, a
+`NORMALISE 'e' FROM AUTHORITATIVE <mod>`. The gate verdict on those statements
+is what squeakwell reports: `gate_level 6` means the field names resolve in the
+recovered schema and the statement shape passes L0–L6; `4` means the transition
+is admissible. It says nothing about the values (they travel in `$n`), L2 is
+near-vacuous on parsed input, and L7–L10 are reported as *not expressible from
+text (vcl-ut #25)*, never as achieved. Phase 5 is re-scoped from "levels 7–10"
+to: fixpoint reached, gate-admissible at 6/4, provenance chain verifies, server
+drift agrees with local expectation.
+
+=== 4.5 Aspects the design must honour regardless of option
+
+* **Fail-closed.** Remove every `.ok()` on client calls; `recover` refuses to
+  start without `GET /health`; a missing or timed-out gate aborts the round
+  before any network effect; no offline switch for `recover`.
+* **No silent green.** Raw `verisim-drift` calculators are never used without a
+  computable flag; `quality` is `Option<f64>`; server-dependent tests *skip with
+  a message*, never pass, when the server or gate is absent.
+* **Integrity and provenance.** GET after every PUT (the server under-reports
+  presence on update); one provenance record per executed statement keyed by
+  its SHA-256; `GET /provenance/{id}/verify` before export; the server's actor
+  string is client-supplied, so the chain is tamper-evident, not authenticated.
+* **Privacy.** Fragments, params and the review queue stay in the workdir;
+  only agreed, singleton-fibre values are lowered; bind the recovery server to
+  loopback or the podman network, enable auth, build the persistent image with
+  a retention policy; the FNV hash-embedding is a content fingerprint and is
+  labelled non-semantic.
+* **Security of the gate seam.** Spawn `vclt-gate` by absolute pinned path, no
+  shell, stdin JSON only; record its commit hash in every certificate.
+* **Licensing.** squeakwell, verisimdb and `vcltotal-parse` are MPL-2.0;
+  echo-types carries an AGPL-3.0-or-later text in `LICENSES/` that must be
+  checked before any Agda is vendored; pin every git dependency by revision.
+* **Language policy.** No Python, Go or TypeScript anywhere, including
+  regenerators: only deterministic regeneration ships.
+
+== 5. What else must be created, per repository
+
+=== 5.1 verisimdb
+
+[cols="3,3,1"]
+|===
+| Item | Why | Size
+
+| `POST /normalizer/propose/{id}` and `POST /normalizer/apply/{id}` carrying a
+  `RepairJustification`, by splitting `StoreRegenerator` compute from
+  write-back and adding `propose_from` to `ModalityRegenerator`
+| Today the server picks the target itself and commits on call; the certified
+  program's justification is advisory. This is the single most valuable ask;
+  file it with the measured intent/effect disagreement rate from the MVP.
+| M (~150 LOC + handler)
+
+| Client-chosen id: `POST /octads/{id}` or `Option<id>` on `OctadRequest`, with
+  `OctadStore::create_with_id`
+| Deterministic keys and crash-resume; today journal loss orphans UUIDs.
+| S (~40 LOC)
+
+| `GET /octads/{id}/full` returning modality content, and fix `update()`
+  presence under-reporting
+| A recovery engine must read witness values; today only flags and counts
+  come back.
+| S (~80 LOC)
+
+| Octad-aware drift as a library (`drift_compute.rs` behind an optional
+  `verisim-octad` dependency)
+| Raw calculators read absence as zero drift; the honest layer is private.
+| M (~450 LOC relocation)
+
+| Deterministic Document→Graph (parse the `Relations:` section) and
+  Semantic→Graph regenerators
+| The only Graph-recovery paths that can exist without ML; today none exist.
+| S (~120 LOC)
+
+| Pure value-level resolve kernel (`mcombine` of `Octad.v`) next to
+  `conflict.rs`; fix the `AutoMerge` doc/code mismatch
+| The Coq merge laws have no Rust counterpart; `ConflictResolver` is stateful.
+| S (~80 LOC)
+
+| `PUT /normalizer/config {threshold_policy: fixed, boundary: le}`; proof
+  attachment `POST /octads/{id}/proofs` into the semantic modality
+| Adaptive thresholds make convergence a moving target; proofs have no entity
+  linkage.
+| S–M
+
+| `formal/Recovery.v` (rung 1) and functorising `Normalizer.v` so it and
+  `Octad.v` can coexist in one `Require` chain; fix the CROSS-REPO-MAP rows that
+  cite the unwired `EchoTruncation`
+| No `drift(octad)`, no fill/resolve composition, no measure exists in
+  `formal/`.
+| 150–250 lines Rocq
+|===
+
+=== 5.2 vcl-ut
+
+* `weaken`/`weakenStar` in `Levels.idr` (rung for the ratchet; additive).
+* Additive `RepairJustification` constructors: `LastWriter` and
+  `Reconstructed Modality Residue` with `data Residue = Unique | Finite Nat |
+  Unbounded` (mirrors `FiberSize-fin`; a nat grade doubles as the tropical
+  bottleneck loss). Reopens no theorem; wire tags 3 and 4; one conformance
+  fixture each. Validate with `idris2 --build verification/proofs/vclut-core.ipkg`.
+* Fix `Epistemic.idr` line 149 (atom discarded) and separate `PBelieves` from
+  `PKnows`; a Transition-indexed certificate is the prerequisite for the L10
+  conjecture in section 6.
+* Gate batching (reserved `schema_version`) and exporting the schema-JSON
+  builder from the library; today it lives only in the binary.
+
+=== 5.3 echo-types
+
+* `proofs/agda/EchoPartialSection.agda` (250–400 lines): `PartialSection P :=
+  (b : B) → Maybe (P b)` over `EchoDisplayed.Displayed`; `Defined`/`dom`;
+  pointwise information order with refl/trans (antisymmetry only under the
+  funext parameter); `resolveJoin` through the exact `mcombine` table;
+  conditional `join-comm/assoc/idem`; `restrict` with idempotence and
+  compose-as-meet; `restrict-fibre-char`; guarded fill as inflationary
+  operator; Kleene fixpoint on `Fin 8`. Same OPTIONS header as siblings, zero
+  postulates, wired into `All.agda` and pinned in `Smoke.agda`.
+* `EchoFibreIntersection.agda` (60–120 lines): binary narrowing as a
+  funext-free one-liner, the `Fin n` form by induction; `narrow-shrinks`.
+* Wire `EchoTruncation.agda` into `All.agda`; add the generic one-line
+  `fibre-blind` lemma (today only the `collapse : Bool → ⊤` instance exists).
+* An `EchoRecovery` audience record in the `EchoProvenance` pattern, over
+  fragment positions and the accepted set `T`.
+
+=== 5.4 tropical-types
+
+* `Resource/HubCeiling.lean`: `factor_le`, `zero_bot`, `join_bound`,
+  `lsum_bound`, and the star corollary under an explicit `IsStar` hypothesis;
+  discharged at `MinMax` and `MinPlus`, not `MaxPlus`.
+* `reachGrade (A) (S) (m) := lsum ((allFins n).filter S |>.map (matStar A · m))`
+  with `reachGrade_mono_mat`, `reachGrade_mono_set` (needs a new
+  `lsum_filter_mono`) and `one ⊑ reachGrade A S m` when `S m`.
+* The generic `weightedResidueMeasure` (free-monoid homomorphism; only
+  `one_mul` and `mul_assoc` are used).
+* Reconcile the self-contradictory Isabelle status and add an Isabelle CI job
+  or an explicit "unverified" banner. Walk semantics for `matStar` in Lean is a
+  large item and is not on squeakwell's critical path.
+
+=== 5.5 standards and mathesis
+
+* Add a squeakwell row to the mathesis catalogue once a proof file exists.
+* A `PROOF-STATUS.adoc` ledger in squeakwell with every row OPEN, prover home
+  per policy, and the dependency rows (verisim-api routes, vclt-gate contract)
+  as ASSUMED with pinned commits.
+* No `DATA-FORMAT-ROUTING` document exists in `standards`; do not cite one.
+
+=== 5.6 squeakwell
+
+The task graph in section 8 is the list. The items that are not features:
+re-target the client to real routes; remove the fail-open `.ok()`s; make the
+stub return `NotImplemented` rather than printing "recovery complete"; resolve
+the remaining placeholders; either delete `src/interface/ffi` or make
+`build.zig` reference files that exist; rewrite `PROOF-NEEDS.adoc` to the
+policy split; fix the one clippy warning; add proptest as a dev-dependency or
+stop calling the hand-rolled tests property tests.
+
+== 6. The proof ladder
+
+Rungs are ordered fastest-first. "Status" is the status *after* adversarial
+refutation. Every row is OPEN in the ledger until the named prover runs.
+
+[cols="1,3,2,2,1"]
+|===
+| Rung | Statement (repaired form) | Builds on | Home | Effort
+
+| R0 | Proptest laws: resolve comm/assoc/idem under the chosen kernel,
+  permutation invariance (expected to FAIL for caller-order LWW and the fp
+  Merge strategy, PASS for ModalityPriority with a total tie-break); fill never
+  overwrites an observed value on content modalities; `mu` lex-decreases or the
+  state is a fixpoint; the suite must *find* a case where conflicts rise after
+  fill. | — | squeakwell `tests/` | hours
+
+| R1 | `weaken : SafetyCertificate s sch n -> CanWeakenStar n m ->
+  SafetyCertificate s sch m` (Statement-indexed; transitions have no level
+  index) | `Levels.idr` 279-387 | vcl-ut Idris2 | hours
+
+| R2 | `oid (iter step n o) = oid o` with fill as left-biased merge against the
+  oracle's proposal, all oracles as arguments | `Octad.v` `*_preserves_id` |
+  verisimdb Rocq `Recovery.v` | hours
+
+| R3 | Guarded fill is inflationary on the six content modalities; audit
+  modalities move by chain prefix | `Octad.v` `present`/`missing`,
+  `Provenance.v` `append_record` | Agda source, Rocq recheck | half a day
+
+| R4 | Counter-model theorem: `∃ o. nconflicts o < nconflicts (fill o)` |
+  `drift_compute.rs` 218-263 (runnable witness) | Rocq | hours
+
+| R5 | `weightedResidueMeasure w : ResidueMeasure (List M) R` for any
+  `ResourceAlgebra` (free-monoid hom; survived refutation) |
+  `EchoBridge.lean` 53-104 | tropical-types Lean | hours
+
+| R6 | Element lemma `a ⊠ b ⊑ a` when `one` is top; star corollary only under
+  `IsStar`; `verisim-normalizer`'s FromAuthoritative-from-Document is a
+  single-hub topology | `ParametricLaws.lean`, `Closure.lean` | tropical-types
+  Lean | half a day
+
+| R7 | `reachGrade` monotone in the matrix and in the observed set; observed
+  modality has full grade (survived; needs `lsum_filter_mono`) | `Closure.lean`
+  107-335 | tropical-types Lean | half a day
+
+| R8 | Multi-witness narrowing: binary one-liner, `Fin n` by induction; "covering
+  masks ⇒ subsingleton" fails over opaque `ident` and is dropped |
+  `Echo.agda`, `EchoFiberCount.agda` | echo-types Agda | half a session
+
+| R9 | Permutation-invariance of `fold (merge resolve)` under a semilattice
+  `resolve`, by Permutation induction; the only kernel reachable today (PUT
+  overwrite, `resolve a b = b`) is a non-instance | `Octad.v` 239-309 | Rocq
+  corollary + Agda twin | one day
+
+| R10 | Lexicographic progress and ≤ 9-step termination with explicit
+  `conflict_refl`, `conflict_sym`, `winner_present`, `winner_stable`,
+  `fill_guarded`, and winner-relative `nconflicts` | `Octad.v`, restated
+  `Normalizer.v` axioms | Agda source, Rocq and Lean rechecks | 1–2 days
+
+| R11 | Purity and permutation invariance of the Rust resolve kernel as Creusot
+  `#[ensures]` against a `#[logic] spec_resolve`; Modality gets a derived total
+  order; timestamps as `u64` | `conflict.rs` counterexamples | squeakwell
+  Creusot | 1–2 days incl. toolchain
+
+| R12 | Observation fidelity at fragment granularity: exported `e : Echo
+  restrict_T (obs|_T)`, overruled fragments carry a `RepairJustification` |
+  `Echo.agda`, `EchoProvenance` pattern | Agda record + Creusot export
+  postcondition | one session
+
+| R13 | Review-queue completeness over the enumerated candidate fibre:
+  `hits_y ≡ 0 ⇔ ¬Echo`, `hits_y ≥ 2 ⇒ queued`, `exported ⇒ hits_y ≡ 1`;
+  needs decidable equality on a concrete `mval` | `EchoFiberCount.agda`,
+  `EchoTruncation.agda` (wire it) | Agda + Creusot queue predicate | one session
+
+| R14 | Fibre-blind functionals are constant on the fibre (generic one-line
+  `refl`); witness-reading confidences are not covered, so confidence ranks
+  fibres and never selects within one | `EchoEntropy.agda` 258-262 | echo-types
+  Agda | hours
+
+| R15 | Reintroduction-statement grading: `certified_level(stmt(e), sch) ≥ 1`
+  implies every populated field resolves in the schema; ceiling 6 from text, 4
+  for transitions; values never inspected | `vclt-gate` contract v1 | Idris2
+  wire contract in squeakwell | small-medium
+
+| R16 | Additive `RepairJustification` extension reopens no theorem (needs an
+  `idris2 --build` to confirm) | `Transition.idr` 58-185 | vcl-ut Idris2 | small
+
+| R17 | Bridge: `nconflicts o = 0 → every computable pairwise drift = 0`; pin
+  `ThresholdPolicy::Fixed` and `le` boundaries; do not add `le_trans` axioms to
+  `Drift.v` | `Drift.v` D1/D2 | Rocq, status ASSUMED | hours
+
+| R18 | *Conjecture*: the enumerated candidate fibre as the Kripke world set
+  for a Transition-indexed L10 certificate; unstatable until `Epistemic.idr`
+  line 149 is fixed, `Believes` is separated from `Knows`, and squeakwell has a
+  completeness argument for its enumeration (else the honest modality is
+  Believes, KD45) | `Epistemic.idr`, `EchoEpistemic.agda` | research | large
+|===
+
+**Prover homes per policy.** Theory (R3, R8, R9, R10, R12, R13, R14) is Agda
+source of truth in echo-types, rechecked in Rocq inside `verisimdb/formal/` and
+in Lean; engineering contracts (R1, R15, R16) are Idris2; first-party Rust
+behaviour (R11, the export postcondition, the queue predicate) is Creusot.
+Rocq files that exist before the Agda source are target-only evidence.
+
+**Alternative proof paths, rated** (elegance and correctness first, then
+dependability):
+
+. **Agda-first exactly as above (default arm).** Most elegant: one abstraction
+  closes both the CROSS-REPO-MAP gap and squeakwell's progress theorem. Slowest
+  to a first green light because Agda is not installed anywhere in the estate's
+  CI for this repo.
+. **Rocq-first** (`Recovery.v` before the Agda module, cross-documented as
+  instantiation-first per the standing directive's second clause). Fastest
+  mechanised result (hours once `coqc` exists, `nix shell nixpkgs#coq` is the
+  cheapest route). Loses only the policy's source-of-truth ordering, which the
+  directive explicitly allows when noted.
+. **Lean-first via tropical-types** (R5–R7). Lightest toolchain (`elan` +
+  `lake build`, no Mathlib). Proves the confidence algebra, not the recovery
+  invariants; good second track in parallel, not a substitute.
+. **TLA+ or Alloy model of the fixpoint loop.** Cheap and finds counter-models
+  fast, but it is a parallel model, which PROOF-POLICY forbids as a substitute
+  for Creusot on the Rust; acceptable as a design-time oracle only.
+. **Property tests only (R0) and stop.** Dependable and immediate; leaves every
+  ledger row TESTED with bounds, never PROVEN. The floor, not the plan.
+
+== 7. The empirical gate (before bigger work)
+
+Each experiment has a metric and a pass criterion; results go into
+`docs/EXPERIMENTS.adoc` with run counts. Server-dependent experiments skip with
+a message when `SQUEAKWELL_VERISIM_URL` or `SQUEAKWELL_VCLT_GATE` is unset.
+
+[cols="1,3,3"]
+|===
+| Id | Experiment | Pass criterion
+
+| E1 | Gate throughput: spawn `vclt-gate` for 1,000 statements | p95 ≤ 50 ms;
+  1,000 statements ≤ 60 s; else draft the batching escalation to vcl-ut
+
+| E2 | Absence honesty: raw `verisim-drift` calculators on empty inputs
+  (negative control) vs the squeakwell layer | raw returns 0.0 (documented
+  hazard reproduced); squeakwell `quality` is `None`; 1,000 cases
+
+| E3 | Kernel laws: resolve comm/assoc/idem and permutation invariance
+  (10,000 cases); guarded fill never overwrites, `|missing|` non-increasing
+  (10,000); lex progress and ≤ 9 steps (1,000 runs); the counter-model search
+  finds ≥ 1 case where conflicts rise after fill | 0 violations; ≥ 1
+  counter-model found (the test fails if none is found)
+
+| E4 | Ground truth on `tests/fixtures/damaged-small` (about 20 entities, two
+  sources, four damage classes) | expected numbers declared up front: all
+  graph-dropped entities recovered by ASSERT from the other source; the server
+  path repairs the graph/document-inconsistent ones (and the direction mismatch
+  is logged); deleted titles and contradicted bodies land in review; zero
+  fabricated values
+
+| E5 | Replay determinism: the same journal against two fresh persistent
+  servers | flags, counts, computable scores and chain lengths agree modulo
+  UUID and timestamps; local FNV embedding equals the server's bit-for-bit
+
+| E6 | Gate honesty: 100 % of DECLAREs at 6, NORMALISEs at 4; `EFFECTS` rejected
+  at L0; a tensor-less NORMALISE admitted and *recorded as evidence* that exit
+  0 ≠ repair justified; exit 2 routes to review | all as stated
+
+| E7 | Build weight: cold `cargo build` with the chosen dependency set | under
+  two minutes; no `verisim-*` or `vcltotal-parse` in non-dev dependencies on
+  the compiler route
+|===
+
+== 8. The ultracode engineering session
+
+=== 8.1 Shape
+
+One session, multi-agent, pipelined. Agents own files, not phases; every task
+has a `done_when` that is a command or a grep. Phases: *honest baseline*
+(sequential, one agent), *kernel and fixtures* (parallel), *program, gate,
+client* (parallel), *lowering and loop* (sequential), *tests, benches, docs*
+(parallel), *upstream filings and proof skeletons* (parallel, background).
+Cutoff: the session ends when E1–E7 are recorded, whatever their verdict; a
+red experiment is a result, not a failure of the session.
+
+Agent roles: one *kernel* agent (fill, resolve, measure, R0 tests), one
+*program* agent (IR, printer, synthesis, golden text), one *seam* agent (gate
+client, verisim client, lowering), one *fixture* agent (damaged-small, ground
+truth, damage manifest), one *proof-skeleton* agent (Recovery.v draft,
+EchoPartialSection.agda draft, Program.idr, Creusot annotations, all marked
+"not run here"), one *docs and filings* agent, and a *verifier* agent that only
+runs the experiments and refuses to pass anything it did not run.
+
+=== 8.2 Task graph
+
+[cols="1,4,2,1,1"]
+|===
+| Id | Task | Depends on | Repo | Parallel
+
+| T01 | Honest baseline: this plan, the honesty commit, clippy warning,
+  `PROOF-STATUS.adoc` with all rows OPEN, README title and claims, PROOF-NEEDS
+  split, placeholders outside FFI, Zig decision | — | squeakwell | no
+| T02 | Engine stub honesty: `NotImplemented` instead of prose, no fabricated
+  drift, no `.ok()`, `max_iterations` used or dropped; tests assert the honest
+  behaviour | T01 | squeakwell | yes
+| T03 | Fixture `tests/fixtures/damaged-small`: entities.csv, entities.json,
+  ground-truth.json, damage-manifest.json, README of expected outcomes |
+  — | squeakwell | yes
+| T04 | `just e2e-deps`: build `vclt-gate` from a pinned vcl-ut commit, podman
+  image of `verisim-api` (persistent), env vars, honest reporting of what could
+  not be installed | — | squeakwell | yes
+| T05 | `src/fragments`: readers, typing to `OctadSchema`, presence vectors,
+  candidate lists, gate schema JSON | T03 | squeakwell | yes
+| T06 | `src/kernel/resolve.rs`: pure kernel (ModalityPriority, LastWriter
+  with input timestamps, Union), `nconflicts`, winner; E3(a) tests incl. the
+  caller-order LWW negative control | T01 | squeakwell | yes
+| T07 | `src/kernel/fill.rs`: guarded fill; deterministic regenerators
+  Document→Vector (FNV port, labelled non-semantic), Graph↔Document
+  `Relations:`, Semantic→Graph; refuses `SummaryRegenerator`; E3(b) | T01 |
+  squeakwell | yes
+| T08 | `src/kernel/measure.rs`: `mu`, fibre trichotomy, review predicate,
+  `quality: Option<f64>`; E3(c)(d) | T06, T07 | squeakwell | no
+| T09 | `src/program`: IR with `SymRef`, params, `RepairJustification`,
+  requested level ≤ 6 by construction; canonical printer; stability tests |
+  — | squeakwell | yes
+| T10 | `src/gate`: subprocess client per contract v1, exit mapping, 2 s
+  timeout, certificates with gate commit hash; the four verified cases as
+  tests | T04, T09 | squeakwell | yes
+| T11 | `src/verisim.rs` rewrite: real routes, typed responses with computable
+  flags, errors propagate, GET after PUT; smoke test behind env var | T04 |
+  squeakwell | yes
+| T12 | `src/program/synth.rs`: round-0 and round-n rules; no NORMALISE for
+  targets with no server path; golden `round-0.vcl` for the fixture | T05, T08,
+  T09 | squeakwell | no
+| T13 | `src/lower`: certified program → REST plan → execution; bindings
+  written first; presence pre-check; statement-hash provenance; intent/effect
+  reconciliation; MERGE refused | T10, T11, T09 | squeakwell | no
+| T14 | `src/journal`: round files, `replay`, `diff`, crash-resume | T13 |
+  squeakwell | no
+| T15 | `src/engine`: compile–gate–execute–observe–resynthesise loop; fixed
+  threshold; `mu` trajectory; `NotConverged`; round abort on `GateUnavailable`
+  | T12, T13, T14 | squeakwell | no
+| T16 | `src/review` and `src/export`: review `.vcl` stub; export with
+  derivation tags observed/derived/unresolved; hard error on exporting a review
+  entity; `verify` subcommand | T15 | squeakwell | no
+| T17 | `tests/e2e_recovery.rs`: E2–E6 as assertions; skips without
+  dependencies | T16 | squeakwell | no
+| T18 | Benches: E1 gate throughput, E7 cold build; replace stub benches |
+  T10, T14 | squeakwell | yes
+| T19 | Upstream issues with file:line evidence and E1/E4 numbers: verisimdb
+  (propose/apply, create-with-id, `/full`, drift library, Document→Graph,
+  resolve kernel, fixed threshold, Recovery.v), vcl-ut (weaken, Residue
+  justification, Epistemic 149, batching, schema builder), echo-types
+  (EchoPartialSection, EchoFibreIntersection, wire EchoTruncation),
+  tropical-types (HubCeiling, reachGrade, Isabelle status) | T17, T18 |
+  elsewhere | yes
+| T20 | `verisimdb/formal/Recovery.v` draft with Justfile recipe and
+  Print-Assumptions whitelist; marked unbuilt if `coqc` absent | T06 |
+  verisimdb | yes
+| T21 | `echo-types` drafts `EchoPartialSection.agda`, `EchoFibreIntersection.agda`;
+  `All.agda`/`Smoke.agda` wiring; marked "awaiting agda check" | T06 |
+  echo-types | yes
+| T22 | `src/interface/abi/Program.idr`: IR wire format, journal round-trip,
+  gate request/response; ledger row says whether idris2 ran | T14 | squeakwell
+  | yes
+| T23 | Creusot contracts on `resolve.rs`, `fill.rs`, export; extern specs for
+  verisim types as ASSUMED rows | T08, T16 | squeakwell | yes
+| T24 | Close-out: README/EXPLAINME rewritten to the compiler route with
+  measured numbers; naming ADR stub; STATE.a2ml; mathesis pointer | T17, T18,
+  T19 | squeakwell | no
+|===
+
+Critical path: T01 → T06/T07 → T08 → T12 → T13 → T14 → T15 → T16 → T17 → T24.
+Everything else runs beside it.
+
+=== 8.3 Stop conditions and reporting
+
+* No agent may mark a ledger row above OPEN unless it ran the prover and names
+  its version.
+* No test counts as passed if it skipped.
+* The session report lists E1–E7 with numbers, the measured intent/effect
+  agreement rate, the review-queue contents on the fixture, and every
+  file:line the upstream issues cite.
+
+== 9. Decisions for the owner
+
+Each decision names the default arm per doctrine 15 and says what each option
+causes.
+
+. **Coupling arm.** *Default: the compiler route (D with A's kernel).* Option
+  B-first means waiting on six verisimdb routes before any recovery runs.
+  Option A-only means duplicating two private server semantics and accepting
+  an offline switch. Option C adds about 300 lines of session mapping and a
+  privacy leak channel for no recovery power.
+. **Proof source of truth.** *Default: Agda-first in echo-types, Rocq
+  instantiation second,* as the standing directive says. Rocq-first is faster
+  to a green light and is allowed by the directive's second clause if the
+  docstring says why; it would get `Recovery.v` compiled within hours of
+  installing `coqc`.
+. **vcl-ut extension scope.** *Default: Option 1, additive `RepairJustification`
+  constructors (`LastWriter`, `Reconstructed Modality Residue`)*, which reopens
+  no proof. Option 2 adds a `RECOVER` verb with an evidence slot and reopens
+  totality cases in six functions. Option 0 changes nothing upstream and keeps
+  squeakwell's mapping table as documentation only.
+. **The L10 conjecture.** *Default: park it* behind the three vcl-ut fixes it
+  needs, and label squeakwell's output Believes (KD45) rather than Knows until a
+  completeness argument for the enumeration exists.
+. **Name.** The README still brainstorms; `squeakwell` is the crate, repository
+  and clade name. *Default: keep `squeakwell`* and retire the "Octad-Recover"
+  working title; `resurgam` or `cpr` would mean renaming across the estate's
+  identity registry.
+. **Zig FFI.** *Default: delete `src/interface/ffi`* and record that an Idris2
+  ABI must exist first; the alternative is to fix `build.zig` to reference only
+  files that exist and leave it unbuilt.
+
+== 10. Beyond this repository
+
+Issues to file once the MVP numbers exist (T19), one per line:
+
+* verisimdb: normalizer `propose`/`apply` with `RepairJustification`; client
+  id on create; `GET /octads/{id}/full` and the update under-report; drift as a
+  library; Document→Graph and Semantic→Graph regenerators; value-level resolve
+  kernel and the `AutoMerge` doc/code mismatch; fixed-threshold config and `le`
+  boundary; `formal/Recovery.v` and the `Normalizer.v` functorisation; the
+  CROSS-REPO-MAP rows that cite unwired echo-types modules; auth-on and
+  loopback defaults for recovery deployments.
+* vcl-ut: `weaken`; `RepairJustification` extension; `Epistemic.idr` line 149
+  and Believes/Knows; batching; exported schema-JSON builder; register
+  squeakwell as a gate consumer.
+* echo-types: `EchoPartialSection`; `EchoFibreIntersection`; wire
+  `EchoTruncation`; generic fibre-blind lemma; `EchoRecovery` record; check the
+  AGPL text in `LICENSES/` before any vendoring.
+* tropical-types: `HubCeiling.lean`; `reachGrade` and `lsum_filter_mono`;
+  generic `weightedResidueMeasure`; reconcile the Isabelle status and add a CI
+  job or banner.
+* standards: a note in PROOF-POLICY that `verisimdb/formal/*.v` is target-only
+  evidence for recovery theory until the Agda source lands.
+* mathesis: catalogue row for squeakwell once a proof file exists.
+* Toolchains where agents and CI run: `coqc`, `agda` with stdlib, `elan`/`lake`,
+  `idris2`, Creusot with Why3; record each in `setup.sh`, `guix.scm` and the
+  container, or record their absence in the ledger.
+
+== 11. What changed in the README's story
+
+* "Data that passes all 10 levels is formally verified as recovered" becomes
+  "the reintroduction statements for e are gate-admissible at level k (≤ 6)".
+* "Drift converges monotonically to zero" becomes "the lexicographic measure
+  decreases; drift is observed, never the criterion, and can rise during fill".
+* "Idris2 type kernel with proofs of monotonicity and determinism" becomes
+  "no proofs yet; the repaired statements and their prover homes are in
+  section 3 and 6; the ledger is `PROOF-STATUS.adoc`".
+* "NER and embeddings via ML" becomes "deterministic regeneration only;
+  Document→Vector is a hash fingerprint labelled non-semantic".
+* Phase 5 becomes the fixpoint-plus-gate-plus-provenance criterion.

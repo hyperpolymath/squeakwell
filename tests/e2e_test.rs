@@ -5,7 +5,6 @@
 // Each test exercises the complete ingest → recover → export flow using a
 // temporary working directory so nothing leaks between tests.
 
-use std::path::Path;
 use tempfile::TempDir;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
