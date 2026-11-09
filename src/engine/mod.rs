@@ -42,12 +42,18 @@ pub struct EntityConfidence {
     pub review_reason: Option<String>,
 }
 
-/// Run the recovery process.
+/// Run the five-phase recovery stub.
+///
+/// No workdir data is read or repaired yet. `target_level` limits the level
+/// messages within each phase; all five phases still run. `drift_threshold`
+/// and `max_iterations` are recorded but do not yet control convergence.
+/// The session ID uses a non-blank `SQUEAKWELL_BATCH_ID`, or otherwise the
+/// workdir path, as described by [`session_id_for`].
 ///
 /// Persists session snapshots and phase-transition events to VeriSimDB
 /// (collections: squeakwell:sessions, squeakwell:phase-events). All
 /// VeriSimDB calls are fail-open — the recovery completes even if
-/// VeriSimDB is unreachable.
+/// VeriSimDB is unreachable. Returns `Ok(())` after the phase loop.
 pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterations: u32) -> Result<()> {
     println!("SqueakWell: beginning recovery in {}", workdir);
 
@@ -129,13 +135,13 @@ pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterat
 
 /// Derive the VeriSimDB session ID for a recovery run.
 ///
-/// With a non-empty `batch_id` (the `SQUEAKWELL_BATCH_ID` environment
+/// With a non-blank `batch_id` (the `SQUEAKWELL_BATCH_ID` environment
 /// variable, set by `container/compose.toml` and `container/deploy.k9.ncl`
-/// from `BATCH_ID`) the ID is `sq:b:<sha(batch_id)>`, so two batches that both
-/// mount their volume at `/data` get distinct sessions. Without one it is
-/// `sq:<sha(workdir)>`, unchanged from before, so existing workdir sessions
-/// keep their IDs. The two forms differ in shape (`sq:b:` vs `sq:<hex>`), so a
-/// batch ID can never collide with a workdir ID whatever the inputs.
+/// from `BATCH_ID`), returns `sq:b:<hash>` using the trimmed batch ID.
+/// Otherwise returns `sq:<hash>` using the workdir path exactly as supplied,
+/// so existing workdir sessions keep their IDs. Each hash is the first 12
+/// hexadecimal characters of SHA-256; distinct inputs can share a hash.
+/// The prefixes keep batch and workdir session IDs separate.
 pub fn session_id_for(workdir: &str, batch_id: Option<&str>) -> String {
     match batch_id.map(str::trim).filter(|b| !b.is_empty()) {
         Some(batch) => format!("sq:b:{}", sha2_short(batch)),

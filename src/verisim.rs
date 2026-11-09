@@ -46,16 +46,17 @@ pub struct VeriSimDbClient {
 impl VeriSimDbClient {
     /// Create a new client, reading `VERISIMDB_URL` from the environment.
     ///
-    /// Falls back to `http://localhost:8080` if the variable is unset or
-    /// empty (an empty base URL would make every request fail with a
-    /// relative-URI error, which is a worse failure mode than the documented
-    /// localhost fallback).
+    /// Falls back to `http://localhost:8080` if the variable is unset,
+    /// non-Unicode or blank. Otherwise trims surrounding whitespace and
+    /// trailing slashes, as described by [`Self::from_env_value`].
     pub fn new() -> Self {
         Self::from_env_value(env::var("VERISIMDB_URL").ok())
     }
 
     /// Build a client from the raw `VERISIMDB_URL` value (`None` = unset).
-    /// Blank values fall back to the default exactly like an unset variable.
+    /// Trims surrounding whitespace, then uses `http://localhost:8080` for
+    /// absent or blank values. Removes trailing slashes from the resulting
+    /// base URL without validating it or making a network request.
     pub fn from_env_value(value: Option<String>) -> Self {
         let base_url = value
             .map(|s| s.trim().to_owned())
