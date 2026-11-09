@@ -4,9 +4,13 @@
 
 * *LOC*: ~640 Rust (2026-11-05)
 * *Languages*: Rust only. The unbuilt Zig FFI template was deleted on 2026-11-05 (see `src/interface/ffi/README.adoc`); no Idris2 source yet
-* *Existing proofs*: none. No `.idr` file exists (the template ABI was removed
-  on 2026-03-29, see below). No proof ledger exists yet; one is required by
-  README-EXPLAINME-STANDARD section 5 before any proof is claimed.
+* *Existing proofs*: none in this repository. No `.idr` file exists (the
+  template ABI was removed on 2026-03-29, see below). The proofs that DO
+  exist for squeakwell's invariants live in their estate homes — verisimdb
+  `formal/Recovery.v` (Rocq), echo-types `EchoPartialSection.agda` +
+  `EchoFibreIntersection.agda` (Agda), tropical-types
+  `Resource/HubCeiling.lean` (Lean) — and are ledgered per rung, with
+  receipts, in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc] (2026-11-09).
 * *Prover homes per standards PROOF-POLICY*: Creusot for the Rust kernel
   behaviour, Idris2 for the program/journal/gate wire contracts, Agda (echo-types)
   as theory source rechecked in Rocq (verisimdb/formal) and Lean (tropical-types).

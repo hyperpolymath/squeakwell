@@ -38,6 +38,7 @@ actions = [
   "Owner decisions taken 2026-11-05 (docs/ROUTE-PLAN.adoc section 9): compiler route; Agda-first; vcl-ut RECOVER verb; name kept; Zig FFI deleted",
   "Run the empirical gate E1-E7 before the engine session",
   "Re-target src/verisim.rs to real verisim-api routes",
+  "Proof ledger PROOF-STATUS.adoc (2026-11-09): R2-R10 and R12/R13 theory halves PROVEN in verisimdb/echo-types/tropical-types; R0, R1, R11, R15, R16 OPEN; R17 ASSUMED",
   "File the cross-repo issues listed in docs/ROUTE-PLAN.adoc section 10",
 ]
 
