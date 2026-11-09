@@ -142,7 +142,9 @@ echo "K9: Validation passed."
 set -eu
 ENV="${1:-dev}"
 TAG="${IMAGE_TAG:-latest}"
-BATCH_ID="${BATCH_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
+# Default id: UTC second plus this shell's PID, so two batches started in the
+# same second on one host still get distinct volumes.
+BATCH_ID="${BATCH_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
 VOLUME="squeakwell-data-$BATCH_ID"
 : "${VERISIMDB_URL:?VERISIMDB_URL must be set (https:// in production)}"
 echo "K9: Building squeakwell image for $ENV..."
@@ -150,7 +152,7 @@ cd container && ./ct-build.sh && cd ..
 echo "K9: Running recovery batch $BATCH_ID against $VERISIMDB_URL (volume $VOLUME)..."
 podman run --rm -v "$VOLUME:/data" -e VERISIMDB_URL \
   "ghcr.io/hyperpolymath/squeakwell:$TAG" recover --workdir /data
-echo "K9: Batch $BATCH_ID for $ENV complete. Roll back with: BATCH_ID=$BATCH_ID k9-svc rollback"
+echo "K9: Batch $BATCH_ID for $ENV complete. To discard it, run this component's rollback script with BATCH_ID=$BATCH_ID (the container ran with --rm, so no stopped container holds the volume)."
 "%,
 
     # Rollback: a batch job leaves no running service; rolling back means

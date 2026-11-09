@@ -19,7 +19,7 @@
 # ============================================================================
 FROM cgr.dev/chainguard/wolfi-base:latest AS builder
 
-RUN apk add --no-cache rust build-base pkgconf
+RUN apk add --no-cache build-base pkgconf rust
 
 WORKDIR /build
 
@@ -45,23 +45,21 @@ LABEL org.opencontainers.image.title="squeakwell" \
       dev.cerrotorre.manifest="container/manifest.toml"
 
 # ca-certificates: TLS roots for the https:// VERISIMDB_URL in production.
-RUN apk add --no-cache ca-certificates
-
-# Create non-root user for the application.
-RUN addgroup -S appuser && adduser -S appuser -G appuser
+# Create the non-root user in the same layer.
+RUN apk add --no-cache ca-certificates \
+    && addgroup -S appuser && adduser -S appuser -G appuser
 
 WORKDIR /app
 
 COPY --from=builder /build/target/release/squeakwell /app/squeakwell
 
 COPY container/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
 COPY container/manifest.toml /app/manifest.toml
 
 # Recovery working directories live under /data (mountable volume).
-RUN mkdir -p /data && chown appuser:appuser /data
-RUN chown -R appuser:appuser /app
+RUN chmod +x /app/entrypoint.sh \
+    && mkdir -p /data && chown appuser:appuser /data \
+    && chown -R appuser:appuser /app
 
 ENV APP_LOG_FORMAT=json
 ENV APP_DATA_DIR=/data

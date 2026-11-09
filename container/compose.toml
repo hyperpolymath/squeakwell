@@ -27,11 +27,8 @@ version = "1.0"
 [services.squeakwell]
 image = "ghcr.io/hyperpolymath/squeakwell:latest.ctp"
 command = ["recover", "--workdir", "/data"]
-environment = {
-  APP_LOG_FORMAT = "json",
-  APP_DATA_DIR = "/data",
-  VERISIMDB_URL = "${VERISIMDB_URL}",
-}
+# TOML 1.0: an inline table stays on one line with no trailing comma.
+environment = { APP_LOG_FORMAT = "json", APP_DATA_DIR = "/data", VERISIMDB_URL = "${VERISIMDB_URL}" }
 # One volume per batch; see deploy.k9.ncl for the matching rollback rule.
 volumes = ["squeakwell-data-${BATCH_ID}:/data"]
 # A batch runs once; do not restart it.

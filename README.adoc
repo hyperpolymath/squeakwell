@@ -117,7 +117,7 @@ function: recovery is complete when cross-modal drift approaches zero.
   - Phase 2: Cross-modal inference (fill missing modalities)
   - Phase 3: Conflict resolution (provenance + temporal + semantic arbitration)
   - Phase 4: Type tightening (VCL-total levels 4-6)
-  - Phase 5: Convergence (gate ceiling L6 today; VCL-total levels 7-10 are future vcl-ut work)
+  - Phase 5: Convergence (no further gate tightening today: Phase 4 already reaches the L6 ceiling; VCL-total levels 7-10 are future vcl-ut work)
 
 * **Invariants** (`src/abi/mod.rs`; no proofs exist yet, prover homes per
   estate PROOF-POLICY are in `docs/ROUTE-PLAN.adoc`) — the engine is designed so that:
