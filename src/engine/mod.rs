@@ -51,11 +51,11 @@ pub struct EntityConfidence {
 pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterations: u32) -> Result<()> {
     println!("SqueakWell: beginning recovery in {}", workdir);
 
-    // Use a stable session ID derived from the workdir path
-    let session_id = format!(
-        "sq:{}",
-        sha2_short(workdir)
-    );
+    // Stable session ID: the batch id when the runner supplies one (every
+    // container batch mounts its volume at the same path, so the path alone
+    // would make distinct batches share one VeriSimDB session), else the
+    // workdir path.
+    let session_id = session_id_for(workdir, std::env::var("SQUEAKWELL_BATCH_ID").ok().as_deref());
 
     let vdb = VeriSimDbClient::new();
 
@@ -125,6 +125,21 @@ pub fn recover(workdir: &str, target_level: u8, drift_threshold: f64, max_iterat
 
     println!("\nSqueakWell: recovery complete (stub — engine implementation pending)");
     Ok(())
+}
+
+/// Derive the VeriSimDB session ID for a recovery run.
+///
+/// With a non-empty `batch_id` (the `SQUEAKWELL_BATCH_ID` environment
+/// variable, set by `container/compose.toml` and `container/deploy.k9.ncl`
+/// from `BATCH_ID`) the ID is `sq:<sha(batch_id)>`, so two batches that both
+/// mount their volume at `/data` get distinct sessions. Without one it falls
+/// back to `sq:<sha(workdir)>`, which is stable across restarts of the same
+/// working directory.
+pub fn session_id_for(workdir: &str, batch_id: Option<&str>) -> String {
+    match batch_id.map(str::trim).filter(|b| !b.is_empty()) {
+        Some(batch) => format!("sq:{}", sha2_short(&format!("batch:{batch}"))),
+        None => format!("sq:{}", sha2_short(workdir)),
+    }
 }
 
 /// Derive a short stable identifier from an arbitrary string.

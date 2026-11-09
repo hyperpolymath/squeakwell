@@ -9,7 +9,9 @@
 # deploy.k9.ncl is the primary way to run batches; this file is the
 # selur-compose equivalent for operators who already run a selur stack.
 #
-# Usage:
+# Usage (both variables are required: compose substitutes an unset variable
+# with the empty string, which would give an empty VERISIMDB_URL and a volume
+# named "squeakwell-data-"; the entrypoint warns loudly in both cases):
 #   BATCH_ID=20261109T120000Z VERISIMDB_URL=https://verisim.example selur-compose up
 #   selur-compose verify                 # Verify the .ctp signature
 #   selur-compose logs squeakwell        # Read the batch log
@@ -28,7 +30,9 @@ version = "1.0"
 image = "ghcr.io/hyperpolymath/squeakwell:latest.ctp"
 command = ["recover", "--workdir", "/data"]
 # TOML 1.0: an inline table stays on one line with no trailing comma.
-environment = { APP_LOG_FORMAT = "json", APP_DATA_DIR = "/data", VERISIMDB_URL = "${VERISIMDB_URL}" }
+# SQUEAKWELL_BATCH_ID makes the VeriSimDB session id per batch; without it every
+# batch would derive the same id from the shared mount path /data.
+environment = { APP_LOG_FORMAT = "json", APP_DATA_DIR = "/data", VERISIMDB_URL = "${VERISIMDB_URL}", SQUEAKWELL_BATCH_ID = "${BATCH_ID}" }
 # One volume per batch; see deploy.k9.ncl for the matching rollback rule.
 volumes = ["squeakwell-data-${BATCH_ID}:/data"]
 # A batch runs once; do not restart it.

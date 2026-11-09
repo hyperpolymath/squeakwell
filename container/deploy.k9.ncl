@@ -81,8 +81,11 @@ K9!
     recipes = {
       install = "container/ct-build.sh",
       validate = "podman run --rm ghcr.io/hyperpolymath/squeakwell:latest --version",
-      deploy = "podman run --rm -v squeakwell-data-$BATCH_ID:/data -e VERISIMDB_URL ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
-      migrate = "container/ct-build.sh && podman run --rm -v squeakwell-data-$BATCH_ID:/data -e VERISIMDB_URL ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
+      # The one-line recipes do not generate a default BATCH_ID (only
+      # scripts.deploy below does); they fail fast instead of running on an
+      # empty id, and they pass the id into the container as the session key.
+      deploy = "podman run --rm -v \"squeakwell-data-${BATCH_ID:?BATCH_ID must be set}:/data\" -e \"VERISIMDB_URL=${VERISIMDB_URL:?VERISIMDB_URL must be set}\" -e \"SQUEAKWELL_BATCH_ID=$BATCH_ID\" ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
+      migrate = "container/ct-build.sh && podman run --rm -v \"squeakwell-data-${BATCH_ID:?BATCH_ID must be set}:/data\" -e \"VERISIMDB_URL=${VERISIMDB_URL:?VERISIMDB_URL must be set}\" -e \"SQUEAKWELL_BATCH_ID=$BATCH_ID\" ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
     },
   },
 
@@ -150,7 +153,7 @@ VOLUME="squeakwell-data-$BATCH_ID"
 echo "K9: Building squeakwell image for $ENV..."
 cd container && ./ct-build.sh && cd ..
 echo "K9: Running recovery batch $BATCH_ID against $VERISIMDB_URL (volume $VOLUME)..."
-podman run --rm -v "$VOLUME:/data" -e VERISIMDB_URL \
+podman run --rm -v "$VOLUME:/data" -e VERISIMDB_URL -e "SQUEAKWELL_BATCH_ID=$BATCH_ID" \
   "ghcr.io/hyperpolymath/squeakwell:$TAG" recover --workdir /data
 echo "K9: Batch $BATCH_ID for $ENV complete. To discard it, run this component's rollback script with BATCH_ID=$BATCH_ID (the container ran with --rm, so no stopped container holds the volume)."
 "%,

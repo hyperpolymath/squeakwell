@@ -12,7 +12,7 @@
 #
 # Run one recovery batch (working directory on a named volume):
 #   podman run --rm -v squeakwell-data-<batch>:/data -e VERISIMDB_URL \
-#     squeakwell:latest recover --workdir /data
+#     -e SQUEAKWELL_BATCH_ID=<batch> squeakwell:latest recover --workdir /data
 
 # ============================================================================
 # Stage 1: Builder

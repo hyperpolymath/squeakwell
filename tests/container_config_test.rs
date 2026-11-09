@@ -17,7 +17,20 @@ fn compose_toml_parses_and_names_the_batch_service() {
     let svc = &v["services"]["squeakwell"];
     assert_eq!(svc["restart"].as_str(), Some("no"));
     assert_eq!(svc["environment"]["APP_DATA_DIR"].as_str(), Some("/data"));
+    // The VeriSimDB target and the per-batch session key must both reach the
+    // container; without them the client falls back to localhost and every
+    // batch would share one session id.
+    assert_eq!(svc["environment"]["VERISIMDB_URL"].as_str(), Some("${VERISIMDB_URL}"));
+    assert_eq!(svc["environment"]["SQUEAKWELL_BATCH_ID"].as_str(), Some("${BATCH_ID}"));
     assert!(svc.get("ports").is_none(), "a batch CLI exposes no ports");
+    // One named volume per batch, mounted at the workdir, and declared.
+    let volumes: Vec<&str> =
+        svc["volumes"].as_array().expect("volumes array").iter().filter_map(|v| v.as_str()).collect();
+    assert_eq!(volumes, vec!["squeakwell-data-${BATCH_ID}:/data"]);
+    assert!(
+        v["volumes"].get("squeakwell-data-${BATCH_ID}").is_some(),
+        "the per-batch volume must be declared under [volumes]"
+    );
 }
 
 #[test]
@@ -33,4 +46,18 @@ fn vordr_toml_parses_with_health_probe_disabled() {
     let v = parse("container/vordr.toml");
     assert_eq!(v["health"]["enabled"].as_bool(), Some(false));
     assert_eq!(v["crash_detection"]["max_restarts"].as_integer(), Some(0));
+}
+
+#[test]
+fn session_id_is_per_batch_when_a_batch_id_is_supplied() {
+    use squeakwell::engine::session_id_for;
+    // Two batches on the same mount path must not share a VeriSimDB session.
+    let a = session_id_for("/data", Some("20261109T120000Z-1"));
+    let b = session_id_for("/data", Some("20261109T120000Z-2"));
+    assert_ne!(a, b);
+    assert!(a.starts_with("sq:") && a.len() == 15);
+    // Without a batch id the id is a stable function of the workdir alone,
+    // and a blank batch id counts as absent.
+    assert_eq!(session_id_for("/data", None), session_id_for("/data", Some("  ")));
+    assert_ne!(session_id_for("/data", None), session_id_for("/other", None));
 }

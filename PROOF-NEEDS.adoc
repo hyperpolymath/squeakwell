@@ -11,6 +11,11 @@
   `EchoFibreIntersection.agda` (Agda), tropical-types
   `Resource/HubCeiling.lean` (Lean) — and are ledgered per rung, with
   receipts, in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc] (2026-11-09).
+  These are *theory* results over abstract carriers. In particular the
+  Lean hub-ceiling lemmas hold for any resource algebra whose unit is top;
+  their application to squeakwell's f64 confidence scores (the quantisation
+  layer onto an ℕ-based `MinPlus` carrier, and the walk semantics of
+  `matStar`) is not proved anywhere and stays OPEN (ledger R6, R7 notes).
 * *Prover homes per standards PROOF-POLICY*: Creusot for the Rust kernel
   behaviour, Idris2 for the program/journal/gate wire contracts, Agda (echo-types)
   as theory source rechecked in Rocq (verisimdb/formal) and Lean (tropical-types).

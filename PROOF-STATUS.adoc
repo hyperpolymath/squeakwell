@@ -40,15 +40,17 @@ SafetyCertificate s sch m` |vcl-ut Idris2 |OPEN |Not started.
 |R2 |Identity persists through every recovery round, for every oracle |Rocq,
 verisimdb `formal/Recovery.v` |PROVEN-WITH-AXIOMS |`step_preserves_id`,
 `iter_preserves_id`. Axioms: none beyond Octad.v's parameters `mval`, `ident`
-(no `functional_extensionality_dep` on this row — see receipt C1).
+(`Print Assumptions` for both lemmas — receipt C1).
 
 |R3 |Guarded fill is inflationary on the information order and NOT monotone
 on it |Agda source: echo-types `EchoPartialSection.agda`; Rocq recheck
 `Recovery.v` |PROVEN (Agda) / PROVEN-WITH-AXIOMS (Rocq) |Agda:
 `fill-guarded`, `fill-inflationary`, `FillNotMonotone.fill-not-monotone`
 (pointwise, funext-free). Rocq: `fill_guarded`, `fill_inflationary`,
-`fill_not_monotone` (functional_extensionality_dep). Audit modalities by chain
-prefix: verisimdb `Provenance.v`, not re-proved here.
+`fill_not_monotone` — all three on `mval`, `ident` only (no
+`functional_extensionality_dep`; the counter-model is decided by `Nat.eqb`
+on concrete octads, so no function equality is needed). Audit modalities by
+chain prefix: verisimdb `Provenance.v`, not re-proved here.
 
 |R4 |Counter-model: filling can raise the conflict count |Rocq `Recovery.v`
 |PROVEN-WITH-AXIOMS |`fill_can_raise_conflicts` (0 → 2 ordered conflicting
@@ -85,12 +87,15 @@ PUT kernel is a non-instance |Agda `EchoPartialSection.agda` (merge laws);
 Rocq `Recovery.v` (fold) |PROVEN (Agda laws) / PROVEN-WITH-AXIOMS (Rocq fold)
 |Agda: `merge-comm`, `merge-assoc`, `merge-idem` (pointwise, implications
 from `resolve`). Rocq: `fold_merge_perm` (same-identifier batch, commutative
-+ associative resolve), `put_commutative_iff_trivial`.
++ associative resolve; uses `functional_extensionality_dep` because `merge_swap`
+rewrites octads as functions), `put_commutative_iff_trivial` (`mval` only).
 
 |R10 |Lexicographic progress and ≤ 9-round termination with explicit
 hypotheses |Rocq `Recovery.v` |PROVEN-WITH-AXIOMS |`step_progress`,
 `iter_bounded`, `iter_9_fixpoint`, `iter_9_no_conflicts`. Hypotheses
-explicit: `conflict_refl`, `winner_some`. Not restated in Agda or Lean (needs
+explicit: `conflict_refl`, `winner_some`. Axioms: `step_progress` and
+`iter_9_fixpoint` use `functional_extensionality_dep` (octad-as-function
+equalities); `iter_9_no_conflicts` uses `mval`, `ident` only. Not restated in Agda or Lean (needs
 the finite octad and a conflict test); the ladder said "Agda source, Rocq and
 Lean rechecks" — Rocq is the source for this rung.
 
@@ -140,11 +145,15 @@ verisimdb `Drift.v` |ASSUMED |Not stated; `Drift.v` D1/D2 untouched.
 |C1 |Coq 8.18.0 (Ubuntu 24.04 apt). `cd verisimdb/formal && coqc -q Octad.v
 && coqc -q Recovery.v > Recovery.out`; whitelist
 `awk '/^[A-Za-z_][A-Za-z0-9_]* :/ {print $1}' Recovery.out \| sort -u`
-|Exit 0 in 1.8 s. Assumptions over all twelve `Print Assumptions` blocks:
-`mval`, `ident`, `functional_extensionality_dep` — identical to the
-`Octad.v` whitelist. Rows R2, R4, R9 (fold), R10 use only `mval`/`ident`;
-R3's `fill_not_monotone` and the R10 fixpoint lemmas that rewrite octads use
-`functional_extensionality_dep`. The nine pre-existing modules also compile
+|Exit 0 in 1.8 s. Union of assumptions over all twelve `Print Assumptions`
+blocks: `mval`, `ident`, `functional_extensionality_dep` — identical to the
+`Octad.v` whitelist. Per lemma (re-run 2026-11-09 after review): `mval`,
+`ident` only for `fill_guarded`, `fill_inflationary`, `fill_not_monotone`,
+`fill_can_raise_conflicts`, `normalise_no_conflicts`, `step_preserves_id`,
+`iter_preserves_id`, `iter_9_no_conflicts`; `mval` only for
+`put_commutative_iff_trivial`; `mval`, `ident`, `functional_extensionality_dep`
+for `step_progress`, `iter_9_fixpoint`, `fold_merge_perm` (the three that
+rewrite an octad as a function). The nine pre-existing modules also compile
 and pass their Justfile whitelists. PR:
 https://github.com/hyperpolymath/verisimdb/pull/350.
 
@@ -165,7 +174,8 @@ headline.
 |`Build completed successfully (21 jobs)`. Axioms: none for `factor_le`,
 `factor_le_right`, `zero_bot`, `join_bound`, `lsum_bound`,
 `lsum_filter_mono`, `reachGrade_mono_mat`, `reachGrade_mono_set`,
-`weightedResidueMeasure`; `[propext, Quot.sound]` for the others. No
+`weightedResidueMeasure`, `weightedMeasure_append` (re-checked 2026-11-09);
+`[propext, Quot.sound]` for the others. No
 `sorry`, no `Classical.choice`. PR:
 https://github.com/hyperpolymath/tropical-types/pull/67.
 |===
