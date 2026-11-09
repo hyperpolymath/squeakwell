@@ -23,9 +23,12 @@ redact_url() {
         *://*) _scheme="${_url%%://*}://"; _rest="${_url#*://}" ;;
         *)     _scheme="";                 _rest="$_url" ;;
     esac
-    case "$_rest" in *@*) _rest="${_rest##*@}" ;; esac
+    # Cut path, query and fragment first: an '@' inside them (e.g.
+    # ?token=a@secret) must not be mistaken for the userinfo separator.
     _rest="${_rest%%/*}"
     _rest="${_rest%%\?*}"
+    _rest="${_rest%%#*}"
+    case "$_rest" in *@*) _rest="${_rest##*@}" ;; esac
     printf '%s%s\n' "$_scheme" "$_rest"
 }
 

@@ -199,8 +199,11 @@ in each.
   gaps are closed in echo-types PR #370 (open, not yet on `main`):
   `EchoPartialSection.agda` (R3/R9 theory), `EchoFibreIntersection.agda` (R8)
   and `EchoTruncation` wired into `All.agda`/`Smoke.agda`; see
-  `PROOF-STATUS.adoc`. Still missing there: the R11 Creusot half, the drift
-  bridge R17, and any statement about f64 confidence (R18).
+  `PROOF-STATUS.adoc`. Still missing there: the drift bridge R17. Not
+  echo-types work: R11 is a Creusot proof of the Rust resolve kernel that
+  lives in squeakwell, and the f64 confidence statement needs the
+  quantisation layer noted under R6/R7 (R18 is the separate Kripke-world
+  conjecture, gated on vcl-ut `Epistemic.idr`).
   Retracted and gated: the graded comonad,
   the cone universal property, any 2-categorical shape, EI-2 (gate G-001).
   Hard limit the theory itself states: any fibre-determined functional is

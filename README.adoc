@@ -116,8 +116,8 @@ function: recovery is complete when cross-modal drift approaches zero.
   - Phase 1: Loose acceptance + schema inference
   - Phase 2: Cross-modal inference (fill missing modalities)
   - Phase 3: Conflict resolution (provenance + temporal + semantic arbitration)
-  - Phase 4: Type tightening (VCL-total levels 4-6)
-  - Phase 5: Convergence (no further gate tightening today: Phase 4 already reaches the L6 ceiling; VCL-total levels 7-10 are future vcl-ut work)
+  - Phase 4: Type tightening (VCL-total levels 4-6; gating planned, the stub does not yet invoke `vclt-gate`)
+  - Phase 5: Convergence (no gate level beyond Phase 4's planned L6 ceiling; VCL-total levels 7-10 are future vcl-ut work)
 
 * **Invariants** (`src/abi/mod.rs`) — the engine is designed so that the
   following hold. No proof lives in this repository and the Rust engine itself

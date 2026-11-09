@@ -152,7 +152,8 @@ VOLUME="squeakwell-data-$BATCH_ID"
 : "${VERISIMDB_URL:?VERISIMDB_URL must be set (https:// in production)}"
 echo "K9: Building squeakwell image for $ENV..."
 cd container && ./ct-build.sh && cd ..
-echo "K9: Running recovery batch $BATCH_ID against $VERISIMDB_URL (volume $VOLUME)..."
+# VERISIMDB_URL is not echoed: it may carry credentials or a token.
+echo "K9: Running recovery batch $BATCH_ID against VERISIMDB_URL (volume $VOLUME)..."
 podman run --rm -v "$VOLUME:/data" -e VERISIMDB_URL -e "SQUEAKWELL_BATCH_ID=$BATCH_ID" \
   "ghcr.io/hyperpolymath/squeakwell:$TAG" recover --workdir /data
 echo "K9: Batch $BATCH_ID for $ENV complete. To discard it, run this component's rollback script with BATCH_ID=$BATCH_ID (the container ran with --rm, so no stopped container holds the volume)."

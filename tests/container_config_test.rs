@@ -55,7 +55,15 @@ fn session_id_is_per_batch_when_a_batch_id_is_supplied() {
     let a = session_id_for("/data", Some("20261109T120000Z-1"));
     let b = session_id_for("/data", Some("20261109T120000Z-2"));
     assert_ne!(a, b);
-    assert!(a.starts_with("sq:") && a.len() == 15);
+    assert!(a.starts_with("sq:b:") && a.len() == 17);
+    // Batch and workdir IDs live in separate namespaces: matching inputs,
+    // including a workdir that spells out the old "batch:" prefix, never
+    // share a session.
+    assert_ne!(session_id_for("foo", None), session_id_for("/data", Some("foo")));
+    assert_ne!(session_id_for("batch:foo", None), session_id_for("/data", Some("foo")));
+    // Workdir IDs are unchanged in shape, so existing sessions stay reachable.
+    let w = session_id_for("/data", None);
+    assert!(w.starts_with("sq:") && !w.starts_with("sq:b:") && w.len() == 15);
     // Without a batch id the id is a stable function of the workdir alone,
     // and a blank batch id counts as absent.
     assert_eq!(session_id_for("/data", None), session_id_for("/data", Some("  ")));
