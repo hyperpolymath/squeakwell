@@ -1,41 +1,45 @@
 # SPDX-License-Identifier: MPL-2.0
 #
-# Cerro Torre manifest for {{PROJECT_NAME}} .ctp bundle
+# Cerro Torre manifest for the squeakwell .ctp bundle
 #
-# This manifest describes the container image for verified
-# container packaging. Used by `ct pack` to create .ctp bundles.
+# Describes the squeakwell container image for verified container
+# packaging. Used by `ct pack` to create .ctp bundles. squeakwell is a
+# batch recovery CLI: it listens on no port and exposes no HTTP endpoint.
 
 [metadata]
-name = "{{SERVICE_NAME}}"
-version = "{{VERSION}}"
+name = "squeakwell"
+version = "0.1.0"
 revision = 1
-summary = "{{PROJECT_DESCRIPTION}}"
+summary = "Database recovery through cross-modal constraint propagation on VeriSimDB"
 description = """
-{{PROJECT_NAME}} — containerised service packaged as a verified
-cerro-torre .ctp bundle with Ed25519 signing and full provenance
-tracking.
+squeakwell recovers a damaged database by treating VeriSimDB's eight
+modalities as witnesses of one identity and propagating constraints between
+them until the remaining drift is zero or the entity is queued for human
+review. Packaged as a verified cerro-torre .ctp bundle with Ed25519 signing
+and provenance tracking. Runs as a batch job against the VeriSimDB named by
+VERISIMDB_URL.
 """
-license = "{{LICENSE}}"
+license = "MPL-2.0"
 homepage = "https://github.com/hyperpolymath/squeakwell"
-maintainer = "Jonathan D.A. Jewell <{{EMAIL}}>"
+maintainer = "Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"
 
 [provenance]
 upstream = "https://github.com/hyperpolymath/squeakwell"
-import_date = {{CURRENT_DATE}}T00:00:00Z
+import_date = 2026-11-09T00:00:00Z
 
 [dependencies]
-runtime = ["ca-certificates", "curl"]
-build = []
+runtime = ["ca-certificates"]
+build = ["rust", "build-base", "pkgconf"]
 
 [build]
-system = "podman"
+system = "cargo"
 
 [build.environment]
-APP_HOST = "[::]"
-APP_PORT = "{{PORT}}"
+APP_LOG_FORMAT = "json"
+APP_DATA_DIR = "/data"
 
 [outputs]
-primary = "{{SERVICE_NAME}}"
+primary = "squeakwell"
 split = []
 
 [attestations]
@@ -51,12 +55,13 @@ no_new_privileges = true
 
 [security.capabilities]
 drop = ["ALL"]
-add = ["NET_BIND_SERVICE"]
+add = []
 
 [security.network]
-listen_tcp = [{{PORT}}]
+# Batch client only: outbound HTTPS to VERISIMDB_URL, no listening sockets.
+listen_tcp = []
 
 [security.filesystem]
 read = ["/app/", "/data/"]
 write = ["/data/", "/tmp/"]
-execute = ["/app/entrypoint.sh"]
+execute = ["/app/entrypoint.sh", "/app/squeakwell"]

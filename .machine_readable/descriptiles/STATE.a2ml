@@ -36,9 +36,9 @@ issues = [
 [critical-next-actions]
 actions = [
   "Owner decisions taken 2026-11-05 (docs/ROUTE-PLAN.adoc section 9): compiler route; Agda-first; vcl-ut RECOVER verb; name kept; Zig FFI deleted",
-  "Run the empirical gate E1-E6 before the engine session",
+  "Run the empirical gate E1-E7 before the engine session",
   "Re-target src/verisim.rs to real verisim-api routes",
-  "File the cross-repo issues listed in docs/ROUTE-PLAN.adoc section 12",
+  "File the cross-repo issues listed in docs/ROUTE-PLAN.adoc section 10",
 ]
 
 [maintenance-status]

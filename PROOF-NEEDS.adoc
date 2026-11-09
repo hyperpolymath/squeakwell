@@ -3,7 +3,7 @@
 === Current State
 
 * *LOC*: ~640 Rust (2026-11-05)
-* *Languages*: Rust; an unbuilt Zig FFI template; no Idris2 source yet
+* *Languages*: Rust only. The unbuilt Zig FFI template was deleted on 2026-11-05 (see `src/interface/ffi/README.adoc`); no Idris2 source yet
 * *Existing proofs*: none. No `.idr` file exists (the template ABI was removed
   on 2026-03-29, see below). No proof ledger exists yet; one is required by
   README-EXPLAINME-STANDARD section 5 before any proof is claimed.

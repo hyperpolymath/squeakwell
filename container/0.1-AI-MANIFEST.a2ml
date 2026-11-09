@@ -14,8 +14,8 @@ description: |
   provides Podman-Chainguard-stapeln templates that are customised via
   `just container-init` or `just init` during project bootstrap.
 
-  All files use {{PLACEHOLDER}} tokens that are substituted with project-
-  specific values during initialisation.
+  All files were rendered for squeakwell on 2026-11-09 (tokens substituted with project-specific values;
+  no tokens remain).
 
 purpose: |
   Provide a complete, security-first container deployment story for any
@@ -128,7 +128,7 @@ invariants:
 ---
 ### [USAGE]
 initialisation: |
-  Run `just container-init` to substitute all {{PLACEHOLDER}} tokens with
+  Rendered 2026-11-09; `just container-init` would re-substitute tokens with
   project-specific values. This is also run as part of `just init`.
 
 development: |

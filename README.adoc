@@ -61,7 +61,7 @@ Damaged data (fragments, corruption, inconsistencies)
   Drift score: ~0.15
         │
         ▼
-  PHASE 5 — CONVERGENCE (VCL-total Levels 7-10)
+  PHASE 5 — CONVERGENCE (gate ceiling L6; VCL-total Levels 7-10 are future vcl-ut work)
   Cardinality bounds, effect tracking, temporal consistency, linearity.
   The reintroduction statements for an entity are gate-admissible at level k
   (ceiling 6 from VCL text; see docs/ROUTE-PLAN.adoc section 4.4).
@@ -117,7 +117,7 @@ function: recovery is complete when cross-modal drift approaches zero.
   - Phase 2: Cross-modal inference (fill missing modalities)
   - Phase 3: Conflict resolution (provenance + temporal + semantic arbitration)
   - Phase 4: Type tightening (VCL-total levels 4-6)
-  - Phase 5: Convergence (VCL-total levels 7-10)
+  - Phase 5: Convergence (gate ceiling L6 today; VCL-total levels 7-10 are future vcl-ut work)
 
 * **Invariants** (`src/abi/mod.rs`; no proofs exist yet, prover homes per
   estate PROOF-POLICY are in `docs/ROUTE-PLAN.adoc`) — the engine is designed so that:

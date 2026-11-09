@@ -1,20 +1,22 @@
 # SPDX-License-Identifier: MPL-2.0
 #
-# {{PROJECT_NAME}} selur-compose configuration
+# squeakwell selur-compose configuration
 #
-# Orchestrates the container stack as verified container bundles (.ctp).
-# Uses selur zero-copy IPC between services on the same host.
+# squeakwell is a batch recovery CLI, not a long-running service: it opens
+# no port and needs no edge gateway. This stack runs ONE recovery batch as a
+# verified .ctp container against the VeriSimDB named by VERISIMDB_URL, with
+# the batch working directory on its own named volume. The k9 component in
+# deploy.k9.ncl is the primary way to run batches; this file is the
+# selur-compose equivalent for operators who already run a selur stack.
 #
 # Usage:
-#   selur-compose up                     # Start all services
-#   selur-compose up --detach            # Start in background
-#   selur-compose verify                 # Verify all .ctp signatures
-#   selur-compose ps                     # Check status
-#   selur-compose logs -f {{SERVICE_NAME}}  # Stream logs
-#   selur-compose down                   # Stop all services
+#   BATCH_ID=20261109T120000Z VERISIMDB_URL=https://verisim.example selur-compose up
+#   selur-compose verify                 # Verify the .ctp signature
+#   selur-compose logs squeakwell        # Read the batch log
+#   selur-compose down                   # Remove the stopped batch container
 #
 # Fallback (when selur is not installed):
-#   podman compose --file compose.toml up --detach
+#   podman compose --file compose.toml up
 
 version = "1.0"
 
@@ -22,49 +24,30 @@ version = "1.0"
 # Services
 # ============================================================================
 
-# Primary application service
-[services.{{SERVICE_NAME}}]
-image = "{{REGISTRY}}/{{SERVICE_NAME}}:latest.ctp"
-ports = ["{{PORT}}:{{PORT}}"]
+[services.squeakwell]
+image = "ghcr.io/hyperpolymath/squeakwell:latest.ctp"
+command = ["recover", "--workdir", "/data"]
 environment = {
-  APP_HOST = "[::]",
-  APP_PORT = "{{PORT}}",
   APP_LOG_FORMAT = "json",
   APP_DATA_DIR = "/data",
+  VERISIMDB_URL = "${VERISIMDB_URL}",
 }
-volumes = ["{{SERVICE_NAME}}-data:/data"]
-restart = "always"
-healthcheck = { test = "curl -sf http://localhost:{{PORT}}/health", interval = "30s", timeout = "5s", retries = 3 }
-
-# Svalinn edge gateway: validates requests, enforces policies, TLS termination
-[services.svalinn]
-image = "ghcr.io/hyperpolymath/svalinn:latest.ctp"
-ports = ["443:443", "80:80"]
-environment = {
-  SVALINN_BACKEND = "http://{{SERVICE_NAME}}:{{PORT}}",
-  SVALINN_POLICY_FILE = "/etc/svalinn/gatekeeper.yaml",
-  SVALINN_TLS_AUTO = "true",
-}
-volumes = ["svalinn-config:/etc/svalinn:ro"]
-depends_on = ["{{SERVICE_NAME}}"]
-restart = "always"
-healthcheck = { test = "curl -sf http://localhost:80/health", interval = "30s", timeout = "5s", retries = 3 }
+# One volume per batch; see deploy.k9.ncl for the matching rollback rule.
+volumes = ["squeakwell-data-${BATCH_ID}:/data"]
+# A batch runs once; do not restart it.
+restart = "no"
 
 # ============================================================================
 # Volumes
 # ============================================================================
 
-[volumes.{{SERVICE_NAME}}-data]
-driver = "local"
-
-[volumes.svalinn-config]
+[volumes."squeakwell-data-${BATCH_ID}"]
 driver = "local"
 
 # ============================================================================
 # Networks
 # ============================================================================
 
-# Use selur zero-copy IPC for inter-service communication on the same host.
-# Falls back to standard bridge networking when selur driver is unavailable.
+# Outbound only (to VERISIMDB_URL). No inter-service IPC is needed.
 [networks.default]
-driver = "selur"
+driver = "bridge"
