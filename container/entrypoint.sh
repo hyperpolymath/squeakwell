@@ -28,7 +28,10 @@ redact_url() {
     _rest="${_rest%%/*}"
     _rest="${_rest%%\?*}"
     _rest="${_rest%%#*}"
-    case "$_rest" in *@*) _rest="${_rest##*@}" ;; esac
+    case "$_rest" in
+        *@*) _rest="${_rest##*@}" ;;
+        *) ;;
+    esac
     printf '%s%s\n' "$_scheme" "$_rest"
 }
 
