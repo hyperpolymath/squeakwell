@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
-= {{PROJECT_NAME}} Container Templates
+= squeakwell Container Templates
 :toc: left
 :toclevels: 3
 :sectnums:
@@ -13,8 +13,9 @@ The stapeln stack provides verified container packaging, edge gateway
 policies, runtime monitoring, and supply-chain signing for Podman-based
 deployments using https://www.chainguard.dev/[Chainguard] Wolfi base images.
 
-All files use `{{PLACEHOLDER}}` tokens that are replaced by `just container-init`
-(or by the top-level `just init` during project bootstrap).
+All files were rendered for squeakwell on 2026-11-09; no `{{PLACEHOLDER}}`
+tokens remain. The `just container-init` recipe described below is how the
+estate template is rendered when the files are re-pulled from the template.
 
 == File Reference
 

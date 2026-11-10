@@ -1,63 +1,63 @@
 #!/bin/sh
 # SPDX-License-Identifier: MPL-2.0
-# {{PROJECT_NAME}} container entrypoint
+# squeakwell container entrypoint
 #
-# Handles signal propagation, startup logging, and health check
-# preparation before exec-ing into the main application process.
+# squeakwell is a batch recovery CLI, not a long-running service. The
+# entrypoint checks the working volume, logs the run parameters, and execs
+# the binary with the caller's arguments so that PID 1 is squeakwell and
+# signals from `podman stop` reach it directly.
 
 set -e
 
-# ---------------------------------------------------------------------------
-# Signal handling
-# ---------------------------------------------------------------------------
-#
-# Trap SIGTERM and SIGINT so that the application can shut down gracefully
-# when Podman sends stop signals (e.g. `podman stop`, `selur-compose down`).
+DATA_DIR="${APP_DATA_DIR:-/data}"
 
-cleanup() {
-    echo "Received shutdown signal — stopping {{SERVICE_NAME}}..."
-    # If the main process is backgrounded, kill it here:
-    # kill "$MAIN_PID" 2>/dev/null || true
-    # wait "$MAIN_PID" 2>/dev/null || true
-    exit 0
+echo "Starting squeakwell..."
+echo "  Data:      ${DATA_DIR}"
+echo "  Log:       ${APP_LOG_FORMAT:-json}"
+# Never echo VERISIMDB_URL itself: a URL may carry userinfo credentials or a
+# token in its query string, and container logs are widely readable. Log the
+# scheme and host only (userinfo, path and query stripped).
+redact_url() {
+    _url="$1"
+    case "$_url" in
+        *://*) _scheme="${_url%%://*}://"; _rest="${_url#*://}" ;;
+        *)     _scheme="";                 _rest="$_url" ;;
+    esac
+    # Cut path, query and fragment first: an '@' inside them (e.g.
+    # ?token=a@secret) must not be mistaken for the userinfo separator.
+    _rest="${_rest%%/*}"
+    _rest="${_rest%%\?*}"
+    _rest="${_rest%%#*}"
+    case "$_rest" in
+        *@*) _rest="${_rest##*@}" ;;
+        *) ;;
+    esac
+    printf '%s%s\n' "$_scheme" "$_rest"
 }
-trap cleanup TERM INT
 
-# ---------------------------------------------------------------------------
-# Startup logging
-# ---------------------------------------------------------------------------
-
-echo "Starting {{SERVICE_NAME}}..."
-echo "  Host: ${APP_HOST:-[::]}"
-echo "  Port: ${APP_PORT:-{{PORT}}}"
-echo "  Data: ${APP_DATA_DIR:-/data}"
-echo "  Log:  ${APP_LOG_FORMAT:-json}"
-
-# ---------------------------------------------------------------------------
-# Health check preparation
-# ---------------------------------------------------------------------------
-#
-# Ensure the data directory exists and is writable.
-# The VOLUME directive in the Containerfile creates /data, but a bind-mount
-# might replace it with an empty directory owned by root.
-
-if [ -d "${APP_DATA_DIR:-/data}" ]; then
-    if [ ! -w "${APP_DATA_DIR:-/data}" ]; then
-        echo "WARNING: ${APP_DATA_DIR:-/data} is not writable by $(whoami)"
-    fi
+if [ -z "${VERISIMDB_URL+set}" ]; then
+    echo "  VeriSimDB: <unset> WARNING: the client falls back to http://localhost:8080 and"
+    echo "             persistence errors are not fatal, so session and phase events"
+    echo "             may not be recorded anywhere. Set VERISIMDB_URL for a real batch."
+elif [ -z "${VERISIMDB_URL}" ]; then
+    echo "  VeriSimDB: <set but empty> WARNING: VERISIMDB_URL is set to the empty string"
+    echo "             (usually a compose file passing through an unset variable)."
+    echo "             The client treats it as unset and falls back to http://localhost:8080;"
+    echo "             session and phase events may not be recorded anywhere."
+else
+    echo "  VeriSimDB: $(redact_url "${VERISIMDB_URL}") (host only; userinfo, path and query not logged)"
+fi
+if [ -n "${SQUEAKWELL_BATCH_ID:-}" ]; then
+    echo "  Batch:     ${SQUEAKWELL_BATCH_ID}"
+else
+    echo "  Batch:     <none> (session id derived from the workdir path; set SQUEAKWELL_BATCH_ID"
+    echo "             so concurrent batches do not share one VeriSimDB session)"
 fi
 
-# ---------------------------------------------------------------------------
-# Exec into main process
-# ---------------------------------------------------------------------------
-#
-# Replace the entrypoint shell with the application process so that
-# signals are delivered directly and PID 1 is the application.
-#
-# TODO: Replace the command below with your application binary.
-# Examples:
-#   exec /app/{{SERVICE_NAME}}
-#   exec /app/release/bin/{{SERVICE_NAME}} start
-#   exec /app/{{SERVICE_NAME}} serve --host "${APP_HOST}" --port "${APP_PORT}"
+# The VOLUME directive in the Containerfile creates /data, but a bind-mount
+# might replace it with an empty directory owned by root.
+if [ -d "${DATA_DIR}" ] && [ ! -w "${DATA_DIR}" ]; then
+    echo "WARNING: ${DATA_DIR} is not writable by $(whoami)"
+fi
 
-exec "$@"
+exec /app/squeakwell "$@"

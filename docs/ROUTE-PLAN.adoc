@@ -193,9 +193,18 @@ in each.
 
 * echo-types: `Echo f y := Σ x. f x ≡ y` and the finite fibre-count,
   decidability and no-section lemmas are mechanised, `--safe --without-K`, zero
-  postulates. Missing: any partial-section or multi-witness layer.
-  `EchoTruncation.agda` is unwired from `All.agda` and so counts as dead code
-  under the repo's own discipline. Retracted and gated: the graded comonad,
+  postulates. At recon time (2026-11-05) there was no partial-section or
+  multi-witness layer and `EchoTruncation.agda` was unwired from `All.agda`
+  (dead code under the repo's own discipline). *Update 2026-11-09:* all three
+  gaps are closed in echo-types PR #370 (open, not yet on `main`):
+  `EchoPartialSection.agda` (R3/R9 theory), `EchoFibreIntersection.agda` (R8)
+  and `EchoTruncation` wired into `All.agda`/`Smoke.agda`; see
+  `PROOF-STATUS.adoc`. Still missing there: the drift bridge R17. Not
+  echo-types work: R11 is a Creusot proof of the Rust resolve kernel that
+  lives in squeakwell, and the f64 confidence statement needs the
+  quantisation layer noted under R6/R7 (R18 is the separate Kripke-world
+  conjecture, gated on vcl-ut `Epistemic.idr`).
+  Retracted and gated: the graded comonad,
   the cone universal property, any 2-categorical shape, EI-2 (gate G-001).
   Hard limit the theory itself states: any fibre-determined functional is
   witness-blind, so a confidence score may rank fibres but never choose a

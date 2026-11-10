@@ -22,7 +22,10 @@
 //
 // ## Environment variable
 //
-//   VERISIMDB_URL — override base URL (default: http://localhost:8080)
+//   VERISIMDB_URL — override base URL (default: http://localhost:8080).
+//                   An empty value is treated as unset (compose files pass
+//                   `${VERISIMDB_URL}` through verbatim, so "unset" arrives
+//                   as "").
 
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
@@ -43,12 +46,29 @@ pub struct VeriSimDbClient {
 impl VeriSimDbClient {
     /// Create a new client, reading `VERISIMDB_URL` from the environment.
     ///
-    /// Falls back to `http://localhost:8080` if the variable is unset.
+    /// Falls back to `http://localhost:8080` if the variable is unset,
+    /// non-Unicode or blank. Otherwise trims surrounding whitespace and
+    /// trailing slashes, as described by [`Self::from_env_value`].
     pub fn new() -> Self {
-        let base_url = env::var("VERISIMDB_URL")
-            .unwrap_or_else(|_| "http://localhost:8080".to_owned());
+        Self::from_env_value(env::var("VERISIMDB_URL").ok())
+    }
+
+    /// Build a client from the raw `VERISIMDB_URL` value (`None` = unset).
+    /// Trims surrounding whitespace, then uses `http://localhost:8080` for
+    /// absent or blank values. Removes trailing slashes from the resulting
+    /// base URL without validating it or making a network request.
+    pub fn from_env_value(value: Option<String>) -> Self {
+        let base_url = value
+            .map(|s| s.trim().to_owned())
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| "http://localhost:8080".to_owned());
         // Strip trailing slash for consistent URL construction
         Self { base_url: base_url.trim_end_matches('/').to_owned() }
+    }
+
+    /// The base URL this client sends requests to (no trailing slash).
+    pub fn base_url(&self) -> &str {
+        &self.base_url
     }
 
     // -------------------------------------------------------------------------
@@ -190,4 +210,26 @@ pub fn phase_event_doc(session_id: &str, phase: u8, iteration: u32, drift: f64) 
         "drift": drift,
         "timestamp": chrono::Utc::now().to_rfc3339(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::VeriSimDbClient;
+
+    #[test]
+    fn blank_url_falls_back_like_unset() {
+        let unset = VeriSimDbClient::from_env_value(None);
+        let empty = VeriSimDbClient::from_env_value(Some(String::new()));
+        let blank = VeriSimDbClient::from_env_value(Some("   ".to_owned()));
+        assert_eq!(unset.base_url(), "http://localhost:8080");
+        assert_eq!(empty.base_url(), unset.base_url());
+        assert_eq!(blank.base_url(), unset.base_url());
+    }
+
+    #[test]
+    fn set_url_is_kept_without_trailing_slash() {
+        let c = VeriSimDbClient::from_env_value(Some("https://verisim.example/".to_owned()));
+        assert_eq!(c.base_url(), "https://verisim.example");
+        assert_eq!(c.doc_url("squeakwell:sessions", "sq:1"), "https://verisim.example/v1/squeakwell:sessions/sq%3A1");
+    }
 }

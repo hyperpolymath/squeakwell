@@ -73,7 +73,7 @@ K9!
     side_effects = [
       "Builds the squeakwell container image via container/ct-build.sh",
       "Runs one recovery batch with podman against the VeriSimDB named by VERISIMDB_URL",
-      "Removes the squeakwell-data volume on rollback",
+      "Removes ONLY the named batch volume squeakwell-data-<BATCH_ID> on rollback (never other batches)",
       "Writes recovery working directories under the mounted /data volume",
     ],
 
@@ -81,8 +81,11 @@ K9!
     recipes = {
       install = "container/ct-build.sh",
       validate = "podman run --rm ghcr.io/hyperpolymath/squeakwell:latest --version",
-      deploy = "podman run --rm -v squeakwell-data:/data -e VERISIMDB_URL ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
-      migrate = "container/ct-build.sh && podman run --rm -v squeakwell-data:/data -e VERISIMDB_URL ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
+      # The one-line recipes do not generate a default BATCH_ID (only
+      # scripts.deploy below does); they fail fast instead of running on an
+      # empty id, and they pass the id into the container as the session key.
+      deploy = "podman run --rm -v \"squeakwell-data-${BATCH_ID:?BATCH_ID must be set}:/data\" -e \"VERISIMDB_URL=${VERISIMDB_URL:?VERISIMDB_URL must be set}\" -e \"SQUEAKWELL_BATCH_ID=$BATCH_ID\" ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
+      migrate = "container/ct-build.sh && podman run --rm -v \"squeakwell-data-${BATCH_ID:?BATCH_ID must be set}:/data\" -e \"VERISIMDB_URL=${VERISIMDB_URL:?VERISIMDB_URL must be set}\" -e \"SQUEAKWELL_BATCH_ID=$BATCH_ID\" ghcr.io/hyperpolymath/squeakwell:latest recover --workdir /data",
     },
   },
 
@@ -102,9 +105,12 @@ K9!
       image = "ghcr.io/hyperpolymath/squeakwell",
       entrypoint = "squeakwell",
       data_volume = "/data",
+      # One named volume per batch: squeakwell-data-<BATCH_ID>. Rollback
+      # removes only that volume, so earlier batches are never destroyed.
+      batch_volume_prefix = "squeakwell-data-",
       # The VeriSimDB instance the recovery writes to is supplied at run time
-      # through this environment variable (an https:// URL in production; the
-      # svalinn gateway in container/compose.toml terminates TLS).
+      # through this environment variable (an https:// URL in production; TLS
+      # is terminated by the VeriSimDB deployment, not by squeakwell).
       verisimdb_url_env = "VERISIMDB_URL",
     },
 
@@ -117,8 +123,8 @@ K9!
   # ─────────────────────────────────────────────────────────────
   scripts = {
     # Pre-deployment validation: the image exists and the CLI answers.
-    # container/compose.toml (the long-running service stack) is NOT used by
-    # this component: squeakwell is a batch job.
+    # container/compose.toml is the selur-compose equivalent of this component
+    # (one batch, one volume); it is NOT invoked here.
     pre_deploy = m%"
 #!/bin/sh
 set -eu
@@ -131,29 +137,40 @@ echo "K9: Validation passed."
 
     # Deployment: build and verify the image, then run one recovery batch
     # against the VeriSimDB named by VERISIMDB_URL (must be set; https in
-    # production). The working directory lives on the squeakwell-data volume.
+    # production). Each batch gets its own named volume
+    # squeakwell-data-<BATCH_ID> (BATCH_ID defaults to a UTC timestamp) so a
+    # rollback can discard exactly one batch.
     deploy = m%"
 #!/bin/sh
 set -eu
 ENV="${1:-dev}"
 TAG="${IMAGE_TAG:-latest}"
+# Default id: UTC second plus this shell's PID, so two batches started in the
+# same second on one host still get distinct volumes.
+BATCH_ID="${BATCH_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
+VOLUME="squeakwell-data-$BATCH_ID"
 : "${VERISIMDB_URL:?VERISIMDB_URL must be set (https:// in production)}"
 echo "K9: Building squeakwell image for $ENV..."
 cd container && ./ct-build.sh && cd ..
-echo "K9: Running one recovery batch against $VERISIMDB_URL..."
-podman run --rm -v squeakwell-data:/data -e VERISIMDB_URL \
+# VERISIMDB_URL is not echoed: it may carry credentials or a token.
+echo "K9: Running recovery batch $BATCH_ID against VERISIMDB_URL (volume $VOLUME)..."
+podman run --rm -v "$VOLUME:/data" -e VERISIMDB_URL -e "SQUEAKWELL_BATCH_ID=$BATCH_ID" \
   "ghcr.io/hyperpolymath/squeakwell:$TAG" recover --workdir /data
-echo "K9: Batch for $ENV complete."
+echo "K9: Batch $BATCH_ID for $ENV complete. To discard it, run this component's rollback script with BATCH_ID=$BATCH_ID (the container ran with --rm, so no stopped container holds the volume)."
 "%,
 
     # Rollback: a batch job leaves no running service; rolling back means
-    # discarding the data volume written by the last batch.
+    # discarding the working volume of ONE named batch. BATCH_ID is required
+    # so that no other batch can be removed by accident.
     rollback = m%"
 #!/bin/sh
 set -eu
-echo "K9: Rolling back the last squeakwell batch (removing squeakwell-data volume)..."
-podman volume rm squeakwell-data
-echo "K9: Rollback complete."
+: "${BATCH_ID:?BATCH_ID must name the batch to roll back (see the deploy output)}"
+VOLUME="squeakwell-data-$BATCH_ID"
+podman volume inspect "$VOLUME" >/dev/null
+echo "K9: Rolling back squeakwell batch $BATCH_ID (removing volume $VOLUME only)..."
+podman volume rm "$VOLUME"
+echo "K9: Rollback of $BATCH_ID complete. Other batch volumes are untouched."
 "%,
   },
 

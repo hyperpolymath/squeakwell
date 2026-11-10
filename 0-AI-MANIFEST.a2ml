@@ -98,7 +98,7 @@ This repo follows the **Dual-Track** architecture:
 ├── src/                        # Source code
 │   └── interface/              # Verified Interface Seams
 │       ├── abi/                # Idris2 ABI (The Spec)
-│       ├── ffi/                # Zig FFI (The Bridge)
+│       ├── ffi/                # Reserved for the FFI bridge (template deleted 2026-11-05; see its README)
 │       └── generated/          # C Headers (The Result)
 ├── container/                  # Stapeln container ecosystem
 ├── docs/                       # Technical depths

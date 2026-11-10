@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 == TEST-NEEDS: squeakwell
 
-=== Current State (2026-11-04)
+=== Current State (2026-11-04; FFI row updated 2026-11-09)
 
 [width="100%",cols="40%,16%,44%",options="header",]
 |===
@@ -12,7 +12,7 @@
 |*E2E tests* |8 |`tests/e2e_test.rs` — CLI subcommands against the stub engine
 |*Benchmarks* |3 |`benches/squeakwell_bench.rs` (criterion) — measure stub dispatch only
 |*Fuzz tests* |0 |`tests/fuzz/` holds a placeholder, no harness
-|*Idris2 / Zig tests* |0 |No `.idr` files exist; Zig FFI is an unbuilt template
+|*Idris2 / Zig tests* |0 |No `.idr` files exist; the Zig FFI template was deleted on 2026-11-05 (`src/interface/ffi/README.adoc`)
 |===
 
 All 23 tests pass (`cargo test`), but every one exercises a stub: the
