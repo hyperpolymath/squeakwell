@@ -562,8 +562,11 @@ until the server can return modality content (`GET /octads/{id}/full`).
 *Update 2026-11-17:* `EchoPartialSection.agda`, `EchoFibreIntersection.agda`
 and the `EchoTruncation` wiring landed in echo-types #370 (shapes as recorded
 in `PROOF-STATUS.adoc`; the merge is a resolver-parametric algebra, not a join
-for the information order). Still open from this list: the generic
-`fibre-blind` lemma and the `EchoRecovery` audience record.
+for the information order). Still open from this list: the Kleene fixpoint on
+`Fin 8` (the merged `EchoPartialSection.agda` has guarded fill and its
+inflationarity, but no fixpoint lemma; the nine-round fixpoint is mechanised
+in Rocq as R10), the generic `fibre-blind` lemma and the `EchoRecovery`
+audience record.
 
 * `proofs/agda/EchoPartialSection.agda` (250–400 lines): `PartialSection P :=
   (b : B) → Maybe (P b)` over `EchoDisplayed.Displayed`; `Defined`/`dom`;
@@ -869,8 +872,10 @@ runs the experiments and refuses to pass anything it did not run.
 | T20 | `verisimdb/formal/Recovery.v` draft with Justfile recipe and
   Print-Assumptions whitelist; marked unbuilt if `coqc` absent | T06 |
   verisimdb | yes
-| T21 | `echo-types` drafts `EchoPartialSection.agda`, `EchoFibreIntersection.agda`;
-  `All.agda`/`Smoke.agda` wiring; marked "awaiting agda check" | T06 |
+| T21 | Done in echo-types #370: `EchoPartialSection.agda` and
+  `EchoFibreIntersection.agda`, wired into `All.agda`/`Smoke.agda` and
+  Agda-checked (receipts in `PROOF-STATUS.adoc`). Remaining: the `Fin 8` Kleene
+  fixpoint, `fibre-blind` and `EchoRecovery` (section 5.3) | T06 |
   echo-types | yes
 | T22 | `src/interface/abi/Program.idr`: IR wire format, journal round-trip,
   gate request/response; ledger row says whether idris2 ran | T14 | squeakwell
