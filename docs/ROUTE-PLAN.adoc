@@ -196,12 +196,12 @@ in each.
   postulates. At recon time (2026-11-05) there was no partial-section or
   multi-witness layer and `EchoTruncation.agda` was unwired from `All.agda`
   (dead code under the repo's own discipline). *Update 2026-11-09:* all three
-  gaps are closed in echo-types PR #370 (open, not yet on `main`):
+  gaps are closed by echo-types PR #370 (merged 2026-11-10):
   `EchoPartialSection.agda` (R3/R9 theory), `EchoFibreIntersection.agda` (R8)
   and `EchoTruncation` wired into `All.agda`/`Smoke.agda`; see
-  `PROOF-STATUS.adoc`. Still missing there: the drift bridge R17. Not
-  echo-types work: R11 is a Creusot proof of the Rust resolve kernel that
-  lives in squeakwell, and the f64 confidence statement needs the
+  `PROOF-STATUS.adoc`. Not echo-types work: the drift bridge R17 is a Rocq
+  lemma for verisimdb `Drift.v` (ASSUMED, not yet stated); R11 is a Creusot
+  proof of the Rust resolve kernel that lives in squeakwell, and the f64 confidence statement needs the
   quantisation layer noted under R6/R7 (R18 is the separate Kripke-world
   conjecture, gated on vcl-ut `Epistemic.idr`).
   Retracted and gated: the graded comonad,

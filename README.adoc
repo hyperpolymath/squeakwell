@@ -62,7 +62,10 @@ Damaged data (fragments, corruption, inconsistencies)
         │
         ▼
   PHASE 5 — CONVERGENCE (gate ceiling L6; VCL-total Levels 7-10 are future vcl-ut work)
-  Cardinality bounds, effect tracking, temporal consistency, linearity.
+  Checks: recovery fixpoint reached, statements gate-admissible at the L6
+  ceiling, provenance chain verifies, server drift agrees with local
+  expectation. Cardinality bounds, effect tracking, temporal consistency and
+  linearity are VCL-total levels 7-10, future vcl-ut work.
   The reintroduction statements for an entity are gate-admissible at level k
   (ceiling 6 from VCL text; see docs/ROUTE-PLAN.adoc section 4.4).
   Drift score: approaches 0.0
@@ -97,8 +100,11 @@ by the others:
 
 **Progressive typing is the ratchet.** Each VCL-total level constrains the
 solution space further. Level 1 accepts almost anything. Level 10 demands
-formal proof. Data can only become more consistent through the levels,
-never less. This is constraint propagation applied to database recovery.
+formal proof. Each level narrows the admissible states, but consistency does
+not rise monotonically: guarded fill can raise the conflict count (a
+mechanised counter-model, rung R3 in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc]),
+which conflict resolution then has to clear. This is constraint propagation
+applied to database recovery.
 
 **Drift detection becomes the convergence metric.** Instead of alerting on
 drift (normal VeriSimDB behaviour), drift score becomes the objective
@@ -127,7 +133,9 @@ function: recovery is complete when cross-modal drift approaches zero.
   fibre-intersection and hub-ceiling lemmas) is mechanised in its estate homes
   and ledgered with prover receipts in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc];
   the prover homes per estate PROOF-POLICY are in `docs/ROUTE-PLAN.adoc`:
-  - Constraint propagation is monotonic (data only gets more consistent)
+  - Guarded fill is inflationary (it never overwrites a present value) but
+    not monotone, and can raise the conflict count; recovery terminates by a
+    lexicographic measure, not by monotone consistency
   - Cross-modal inference preserves entity identity
   - Conflict resolution is deterministic (same input → same output)
   - Type ratchet is sound (passing level N implies passing levels 1..N-1)
