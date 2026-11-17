@@ -102,7 +102,7 @@ by the others:
 solution space further. Level 1 accepts almost anything. Level 10 demands
 formal proof. Each level narrows the admissible states, but consistency does
 not rise monotonically: guarded fill can raise the conflict count (a
-mechanised counter-model, rung R3 in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc]),
+mechanised counter-model, rung R4 in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc]),
 which conflict resolution then has to clear. This is constraint propagation
 applied to database recovery.
 
@@ -134,8 +134,10 @@ function: recovery is complete when cross-modal drift approaches zero.
   and ledgered with prover receipts in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc];
   the prover homes per estate PROOF-POLICY are in `docs/ROUTE-PLAN.adoc`:
   - Guarded fill is inflationary (it never overwrites a present value) but
-    not monotone, and can raise the conflict count; recovery terminates by a
-    lexicographic measure, not by monotone consistency
+    not monotone, and can raise the conflict count; under the hypotheses
+    `conflict_refl` and `winner_some` (and the axioms listed in the ledger),
+    the recovery model reaches a conflict-free fixpoint within nine rounds by a
+    lexicographic measure (R10), not by monotone consistency
   - Cross-modal inference preserves entity identity
   - Conflict resolution is deterministic (same input → same output)
   - Type ratchet is sound (passing level N implies passing levels 1..N-1)

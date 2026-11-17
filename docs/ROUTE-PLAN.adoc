@@ -200,8 +200,9 @@ in each.
   `EchoPartialSection.agda` (R3/R9 theory), `EchoFibreIntersection.agda` (R8)
   and `EchoTruncation` wired into `All.agda`/`Smoke.agda`; see
   `PROOF-STATUS.adoc`. Not echo-types work: the drift bridge R17 is a Rocq
-  lemma for verisimdb `Drift.v` (ASSUMED, not yet stated); R11 is a Creusot
-  proof of the Rust resolve kernel that lives in squeakwell, and the f64 confidence statement needs the
+  lemma for verisimdb `Drift.v` (ASSUMED, not yet stated); R11 is a planned
+  Creusot proof of the Rust resolve kernel, to live in squeakwell (OPEN: no
+  Creusot source yet), and the f64 confidence statement needs the
   quantisation layer noted under R6/R7 (R18 is the separate Kripke-world
   conjecture, gated on vcl-ut `Epistemic.idr`).
   Retracted and gated: the graded comonad,
@@ -535,8 +536,8 @@ until the server can return modality content (`GET /octads/{id}/full`).
 | S–M
 
 | `formal/Recovery.v` (rung 1) and functorising `Normalizer.v` so it and
-  `Octad.v` can coexist in one `Require` chain; fix the CROSS-REPO-MAP rows that
-  cite the unwired `EchoTruncation`
+  `Octad.v` can coexist in one `Require` chain; the CROSS-REPO-MAP rows that cited the
+  unwired `EchoTruncation` are moot since echo-types #370 wired it
 | No `drift(octad)`, no fill/resolve composition, no measure exists in
   `formal/`.
 | 150–250 lines Rocq
@@ -558,6 +559,12 @@ until the server can return modality content (`GET /octads/{id}/full`).
 
 === 5.3 echo-types
 
+*Update 2026-11-17:* `EchoPartialSection.agda`, `EchoFibreIntersection.agda`
+and the `EchoTruncation` wiring landed in echo-types #370 (shapes as recorded
+in `PROOF-STATUS.adoc`; the merge is a resolver-parametric algebra, not a join
+for the information order). Still open from this list: the generic
+`fibre-blind` lemma and the `EchoRecovery` audience record.
+
 * `proofs/agda/EchoPartialSection.agda` (250–400 lines): `PartialSection P :=
   (b : B) → Maybe (P b)` over `EchoDisplayed.Displayed`; `Defined`/`dom`;
   pointwise information order with refl/trans (antisymmetry only under the
@@ -568,8 +575,8 @@ until the server can return modality content (`GET /octads/{id}/full`).
   postulates, wired into `All.agda` and pinned in `Smoke.agda`.
 * `EchoFibreIntersection.agda` (60–120 lines): binary narrowing as a
   funext-free one-liner, the `Fin n` form by induction; `narrow-shrinks`.
-* Wire `EchoTruncation.agda` into `All.agda`; add the generic one-line
-  `fibre-blind` lemma (today only the `collapse : Bool → ⊤` instance exists).
+* Done in #370: wire `EchoTruncation.agda` into `All.agda`. Open: add the
+  generic one-line `fibre-blind` lemma (today only the `collapse : Bool → ⊤` instance exists).
 * An `EchoRecovery` audience record in the `EchoProvenance` pattern, over
   fragment positions and the accepted set `T`.
 
@@ -676,7 +683,7 @@ refutation. Every row is OPEN in the ledger until the named prover runs.
 | R13 | Review-queue completeness over the enumerated candidate fibre:
   `hits_y ≡ 0 ⇔ ¬Echo`, `hits_y ≥ 2 ⇒ queued`, `exported ⇒ hits_y ≡ 1`;
   needs decidable equality on a concrete `mval` | `EchoFiberCount.agda`,
-  `EchoTruncation.agda` (wire it) | Agda + Creusot queue predicate | one session
+  `EchoTruncation.agda` (wired in echo-types #370) | Agda + Creusot queue predicate | one session
 
 | R14 | Fibre-blind functionals are constant on the fibre (generic one-line
   `refl`); witness-reading confidences are not covered, so confidence ranks
@@ -856,7 +863,7 @@ runs the experiments and refuses to pass anything it did not run.
   (propose/apply, create-with-id, `/full`, drift library, Document→Graph,
   resolve kernel, fixed threshold, Recovery.v), vcl-ut (weaken, the RECOVER verb
   with evidence slot and Residue payload, Epistemic 149, batching, schema builder), echo-types
-  (EchoPartialSection, EchoFibreIntersection, wire EchoTruncation),
+  (EchoPartialSection, EchoFibreIntersection, wire EchoTruncation: all done in #370),
   tropical-types (HubCeiling, reachGrade, Isabelle status) | T17, T18 |
   elsewhere | yes
 | T20 | `verisimdb/formal/Recovery.v` draft with Justfile recipe and
@@ -942,8 +949,8 @@ Issues to file once the MVP numbers exist (T19), one per line:
   carrying the `Residue` payload); `Epistemic.idr` line 149
   and Believes/Knows; batching; exported schema-JSON builder; register
   squeakwell as a gate consumer.
-* echo-types: `EchoPartialSection`; `EchoFibreIntersection`; wire
-  `EchoTruncation`; generic fibre-blind lemma; `EchoRecovery` record; check the
+* echo-types: done in #370: `EchoPartialSection`, `EchoFibreIntersection`,
+  `EchoTruncation` wiring. Open: generic fibre-blind lemma; `EchoRecovery` record; check the
   AGPL text in `LICENSES/` before any vendoring.
 * tropical-types: `HubCeiling.lean`; `reachGrade` and `lsum_filter_mono`;
   generic `weightedResidueMeasure`; reconcile the Isabelle status and add a CI
