@@ -61,11 +61,15 @@ Damaged data (fragments, corruption, inconsistencies)
   Drift score: ~0.15
         │
         ▼
-  PHASE 5 — CONVERGENCE (gate ceiling L6; VCL-total Levels 7-10 are future vcl-ut work)
-  Cardinality bounds, effect tracking, temporal consistency, linearity.
+  PHASE 5 — CONVERGENCE (gate ceiling L6; Levels 7-10 not yet reachable from VCL text)
+  Checks: recovery fixpoint reached, statements gate-admissible at the L6
+  ceiling, provenance chain verifies, server drift agrees with local
+  expectation. Cardinality safety is level 6. Effect tracking (7), temporal
+  safety (8), linearity (9) and epistemic safety (10) are defined in vcl-ut,
+  but VCL text cannot express them until its parser lands (vcl-ut #25).
   The reintroduction statements for an entity are gate-admissible at level k
   (ceiling 6 from VCL text; see docs/ROUTE-PLAN.adoc section 4.4).
-  Drift score: approaches 0.0
+  Drift: observed, not the completion criterion
         │
         ▼
   OUTPUT: reconstructed database with:
@@ -97,12 +101,16 @@ by the others:
 
 **Progressive typing is the ratchet.** Each VCL-total level constrains the
 solution space further. Level 1 accepts almost anything. Level 10 demands
-formal proof. Data can only become more consistent through the levels,
-never less. This is constraint propagation applied to database recovery.
+formal proof. Each level narrows the admissible states, but consistency does
+not rise monotonically: guarded fill can raise the conflict count (a
+mechanised counter-model, rung R4 in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc]),
+which conflict resolution then has to clear. This is constraint propagation
+applied to database recovery.
 
-**Drift detection becomes the convergence metric.** Instead of alerting on
-drift (normal VeriSimDB behaviour), drift score becomes the objective
-function: recovery is complete when cross-modal drift approaches zero.
+**Recovery completes at a conflict-free fixpoint.** Drift is observed, not
+used as the completion criterion, and can rise during guarded fill. A
+conflict-free state does not by itself establish zero drift: that bridge
+lemma (R17 in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc]) is still assumed.
 
 == Architecture
 
@@ -117,7 +125,7 @@ function: recovery is complete when cross-modal drift approaches zero.
   - Phase 2: Cross-modal inference (fill missing modalities)
   - Phase 3: Conflict resolution (provenance + temporal + semantic arbitration)
   - Phase 4: Type tightening (VCL-total levels 4-6; gating planned, the stub does not yet invoke `vclt-gate`)
-  - Phase 5: Convergence (no gate level beyond Phase 4's planned L6 ceiling; VCL-total levels 7-10 are future vcl-ut work)
+  - Phase 5: Convergence (no gate level beyond Phase 4's planned L6 ceiling; vcl-ut defines levels 7-10, but VCL text cannot reach them until vcl-ut #25)
 
 * **Invariants** (`src/abi/mod.rs`) — the engine is designed so that the
   following hold. No proof lives in this repository and the Rust engine itself
@@ -127,7 +135,11 @@ function: recovery is complete when cross-modal drift approaches zero.
   fibre-intersection and hub-ceiling lemmas) is mechanised in its estate homes
   and ledgered with prover receipts in link:PROOF-STATUS.adoc[PROOF-STATUS.adoc];
   the prover homes per estate PROOF-POLICY are in `docs/ROUTE-PLAN.adoc`:
-  - Constraint propagation is monotonic (data only gets more consistent)
+  - Guarded fill is inflationary (it never overwrites a present value) but
+    not monotone, and can raise the conflict count; under the hypotheses
+    `conflict_refl` and `winner_some` (and the axioms listed in the ledger),
+    the recovery model reaches a conflict-free fixpoint within nine rounds by a
+    lexicographic measure (R10), not by monotone consistency
   - Cross-modal inference preserves entity identity
   - Conflict resolution is deterministic (same input → same output)
   - Type ratchet is sound (passing level N implies passing levels 1..N-1)
@@ -135,7 +147,8 @@ function: recovery is complete when cross-modal drift approaches zero.
 * **VCL-UT integration** (planned) — The `vclt-gate` binary (hyperpolymath/vcl-ut)
   is the certifier. Phase 1 is to gate at L1–3 and Phase 4 at L4–6, the L6
   ceiling vcl-ut certifies from source today; Phase 5 adds no further gate level
-  (L7–10 are future vcl-ut work). The current engine stub prints the level names
+  (vcl-ut defines L7–10, but they are not expressible from VCL text until
+  vcl-ut #25). The current engine stub prints the level names
   and does not yet invoke the gate, so no phase certifies anything today.
 
 * **Output** — Reconstructed database in VeriSimDB format (all 8 modalities

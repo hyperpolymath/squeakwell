@@ -20,8 +20,25 @@ echo "  Log:       ${APP_LOG_FORMAT:-json}"
 redact_url() {
     _url="$1"
     case "$_url" in
-        *://*) _scheme="${_url%%://*}://"; _rest="${_url#*://}" ;;
-        *)     _scheme="";                 _rest="$_url" ;;
+        *://*)
+            # Only an RFC 3986 scheme (ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ))
+            # may be logged. Anything else before "://" (e.g. host?token=SECRET://x)
+            # could carry a secret, so log a placeholder instead.
+            _scheme="${_url%%://*}"
+            case "$_scheme" in
+                ""|[!a-zA-Z]*|*[!a-zA-Z0-9+.-]*)
+                    printf "%s\n" "<unparseable URL; not logged>"
+                    return 0
+                    ;;
+                *) ;;
+            esac
+            _scheme="${_scheme}://"
+            _rest="${_url#*://}"
+            ;;
+        *)
+            _scheme=""
+            _rest="$_url"
+            ;;
     esac
     # Cut path, query and fragment first: an '@' inside them (e.g.
     # ?token=a@secret) must not be mistaken for the userinfo separator.
@@ -35,12 +52,22 @@ redact_url() {
     printf '%s%s\n' "$_scheme" "$_rest"
 }
 
+# True when the argument contains a non-whitespace character.
+is_nonblank() {
+    case "$1" in
+        *[![:space:]]*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 if [ -z "${VERISIMDB_URL+set}" ]; then
     echo "  VeriSimDB: <unset> WARNING: the client falls back to http://localhost:8080 and"
     echo "             persistence errors are not fatal, so session and phase events"
     echo "             may not be recorded anywhere. Set VERISIMDB_URL for a real batch."
-elif [ -z "${VERISIMDB_URL}" ]; then
-    echo "  VeriSimDB: <set but empty> WARNING: VERISIMDB_URL is set to the empty string"
+elif ! is_nonblank "${VERISIMDB_URL}"; then
+    # Blank means empty or whitespace only: VeriSimDbClient::from_env_value
+    # trims the value and falls back to localhost in both cases.
+    echo "  VeriSimDB: <set but blank> WARNING: VERISIMDB_URL is empty or whitespace only"
     echo "             (usually a compose file passing through an unset variable)."
     echo "             The client treats it as unset and falls back to http://localhost:8080;"
     echo "             session and phase events may not be recorded anywhere."
